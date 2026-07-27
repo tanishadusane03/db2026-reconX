@@ -1,9 +1,12 @@
 -- ============================================================================
 -- TICKET-ADV010 — VWAP per instrument per day (window function)
 -- ============================================================================
-SELECT DISTINCT
-    t.instrument_id,
+SELECT 
+    t.trade_ref,
     t.trade_date,
+    t.quantity,
+    t.price,
+    t.quantity * t.price AS notional,
     SUM(t.price * t.quantity) OVER (PARTITION BY t.instrument_id, t.trade_date)
         / NULLIF(SUM(t.quantity) OVER (PARTITION BY t.instrument_id, t.trade_date), 0)
             AS vwap
@@ -18,7 +21,6 @@ ORDER BY t.trade_date DESC, t.instrument_id;
 --                -> recon_break -> resolution)
 -- ============================================================================
 WITH RECURSIVE trade_lifecycle AS (
-    -- anchor: every trade in its execution state
     SELECT
         t.id           AS trade_id,
         t.trade_ref,
@@ -31,7 +33,6 @@ WITH RECURSIVE trade_lifecycle AS (
 
     UNION ALL
 
-    -- recursive: each subsequent state derived from the previous step
     SELECT
         tl.trade_id,
         tl.trade_ref,
@@ -40,12 +41,13 @@ WITH RECURSIVE trade_lifecycle AS (
             WHEN 1 THEN 'CONFIRMED'
             WHEN 2 THEN 'SETTLED'
             WHEN 3 THEN 'RECONCILED'
+            WHEN 4 THEN 'RESOLVED'             -- ✅ Added RESOLVED
         END                                          AS state,
         s.settlement_date::timestamp                  AS at_ts,
         s.status                                      AS detail
     FROM trade_lifecycle tl
     JOIN settlements s ON s.trade_id = tl.trade_id
-    WHERE tl.step < 4
+    WHERE tl.step < 5                                 -- ✅ Now goes to step 4
 )
 SELECT * FROM trade_lifecycle
 ORDER BY trade_id, step;
