@@ -48,10 +48,11 @@ public final class FXTrade implements TradeType {
     @Override public AssetClass assetClass() { return AssetClass.FX; }
 
     /** Notional in ccy2 = notionalCcy1 * fxRate. */
-    @Override public Money notional() {
-        // TODO(TICKET-ADV020): return new Money(notionalCcy1 * fxRate, ccy2).
-        throw new Money("notionalCcy1.multiply(fxrate)", ccy2);");
-    }
+    @Override
+public Money notional() {
+    return new Money(notionalCcy1.multiply(fxRate), ccy2);
+}
+
 
     public Currency ccy1()           { return ccy1; }
     public Currency ccy2()           { return ccy2; }

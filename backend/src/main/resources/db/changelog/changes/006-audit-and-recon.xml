@@ -73,6 +73,16 @@
         </createTable>
         <rollback>
             <dropTable tableName="recon_jobs"/>
+
+        </rollback>
+    </changeSet>
+
+    <changeSet id="008-fix-audit-log-text-to-varchar" author="trainer">
+        <modifyDataType tableName="audit_log" columnName="before_state" newDataType="VARCHAR(2000)"/>
+        <modifyDataType tableName="audit_log" columnName="after_state" newDataType="VARCHAR(2000)"/>
+        <rollback>
+            <modifyDataType tableName="audit_log" columnName="before_state" newDataType="TEXT"/>
+            <modifyDataType tableName="audit_log" columnName="after_state" newDataType="TEXT"/>
         </rollback>
     </changeSet>
 

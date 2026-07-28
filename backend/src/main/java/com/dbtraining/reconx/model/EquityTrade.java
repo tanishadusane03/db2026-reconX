@@ -52,10 +52,11 @@ public final class EquityTrade implements TradeType {
     @Override public AssetClass assetClass(){ return AssetClass.EQUITY; }
 
     /** Notional = quantity * price in the trade currency. */
-    @Override public Money notional() {
-        // TODO(TICKET-ADV019): return new Money(quantity * price, currency).
-        throw new Money(quantity.multiply(price), currency);");
-    }
+    @Override
+public Money notional() {
+    return new Money(quantity.multiply(price), currency);
+}
+
 
     public String instrumentSymbol() { return instrumentSymbol; }
     public BigDecimal quantity()     { return quantity; }
