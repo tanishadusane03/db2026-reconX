@@ -33,6 +33,10 @@
         <rollback>
             <sql>SELECT 1;</sql>
         </rollback>
+            <rollback>
+        DROP INDEX IF EXISTS idx_instruments_metadata;
+        ALTER TABLE instruments DROP COLUMN IF EXISTS metadata;
+    </rollback>
     </changeSet>
 
 </databaseChangeLog>
