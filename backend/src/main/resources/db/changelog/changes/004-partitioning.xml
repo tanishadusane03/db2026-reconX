@@ -226,6 +226,9 @@
             <dbms type="postgresql"/>
             <tableExists tableName="trades_legacy"/>
         </preConditions>
+        <sql>
+    DROP MATERIALIZED VIEW IF EXISTS mv_daily_recon_summary;
+</sql>
         <dropTable tableName="trades_legacy"/>
         <rollback>
             <sql>SELECT 1;</sql>
