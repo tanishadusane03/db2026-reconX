@@ -18,104 +18,42 @@ ORDER BY t.trade_date DESC, t.instrument_id;
 --                 (execution -> confirmation -> settlement -> recon_break
 --                  -> resolution)
 -- ============================================================================
+-- ============================================================================
+-- Recursive CTE: trade lifecycle (execution -> settlement
+--                -> recon_break -> resolution)
+-- ============================================================================
 WITH RECURSIVE trade_lifecycle AS (
-    -- anchor: every trade starts at EXECUTION
+    -- anchor: every trade in its execution state
     SELECT
         t.id           AS trade_id,
         t.trade_ref,
-        1              AS stage,
-        'EXECUTION'    AS stage_name,
-        t.created_at   AS event_at,
-        COALESCE(t.status, 'EXECUTED')::text AS event_status
+        1              AS step,
+        'EXECUTED'     AS state,
+        t.created_at   AS at_ts,
+        NULL::text     AS detail
     FROM trades t
     WHERE t.deleted_at IS NULL
 
     UNION ALL
 
-    -- recursive: advance by exactly one stage per iteration
+    -- recursive: each subsequent state derived from the previous step
     SELECT
         tl.trade_id,
         tl.trade_ref,
-        tl.stage + 1,
-        next_event.stage_name,
-        next_event.event_at,
-        next_event.event_status
+        tl.step + 1,
+        CASE tl.step
+            WHEN 1 THEN 'CONFIRMED'
+            WHEN 2 THEN 'SETTLED'
+            WHEN 3 THEN 'RECONCILED'
+        END                                          AS state,
+        s.settlement_date::timestamp                  AS at_ts,
+        s.status                                      AS detail
     FROM trade_lifecycle tl
-    JOIN LATERAL (
-        -- stage 2: confirmation
-        SELECT
-            'CONFIRMATION'::text AS stage_name,
-            COALESCE(t2.modified_at, t2.created_at) AS event_at,
-            CASE
-                WHEN t2.status IN ('CONFIRMED', 'SETTLED', 'MATCHED', 'BROKEN', 'RESOLVED') THEN 'CONFIRMED'
-                ELSE 'PENDING_CONFIRMATION'
-            END::text AS event_status
-        FROM trades t2
-        WHERE tl.stage = 1
-          AND t2.id = tl.trade_id
-
-        UNION ALL
-
-        -- stage 3: settlement
-        SELECT
-            'SETTLEMENT'::text AS stage_name,
-            COALESCE(s.settlement_date::timestamp, now()) AS event_at,
-            COALESCE(s.status, 'PENDING')::text AS event_status
-        FROM (
-            SELECT s1.*
-            FROM settlements s1
-            WHERE s1.trade_id = tl.trade_id
-            ORDER BY s1.settlement_date DESC, s1.id DESC
-            LIMIT 1
-        ) s
-        WHERE tl.stage = 2
-
-        UNION ALL
-
-        -- stage 4: recon break
-        SELECT
-            'RECON_BREAK'::text AS stage_name,
-            COALESCE(rb.detected_at, now()) AS event_at,
-            COALESCE(rb.status, 'NO_BREAK')::text AS event_status
-        FROM (
-            SELECT rb1.*
-            FROM recon_breaks rb1
-            WHERE rb1.trade_id = tl.trade_id
-            ORDER BY rb1.detected_at DESC NULLS LAST, rb1.id DESC
-            LIMIT 1
-        ) rb
-        WHERE tl.stage = 3
-
-        UNION ALL
-
-        -- stage 5: resolution
-        SELECT
-            'RESOLUTION'::text AS stage_name,
-            COALESCE(rb_resolved.resolved_at, rb_resolved.detected_at, now()) AS event_at,
-            CASE
-                WHEN rb_resolved.resolved_at IS NOT NULL THEN COALESCE(rb_resolved.status, 'RESOLVED')
-                ELSE 'UNRESOLVED'
-            END::text AS event_status
-        FROM (
-            SELECT rb2.*
-            FROM recon_breaks rb2
-            WHERE rb2.trade_id = tl.trade_id
-            ORDER BY rb2.resolved_at DESC NULLS LAST, rb2.detected_at DESC NULLS LAST, rb2.id DESC
-            LIMIT 1
-        ) rb_resolved
-        WHERE tl.stage = 4
-    ) AS next_event ON TRUE
-    WHERE tl.stage < 5
+    JOIN settlements s ON s.trade_id = tl.trade_id
+    WHERE tl.step < 4
 )
-SELECT
-    trade_id,
-    trade_ref,
-    stage,
-    stage_name,
-    event_at,
-    event_status
-FROM trade_lifecycle
-ORDER BY trade_id, stage;
+SELECT * FROM trade_lifecycle
+ORDER BY trade_id, step;
 
 
 -- ============================================================================
