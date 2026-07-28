@@ -28,11 +28,14 @@ import java.util.Comparator;
  * ordering rule — there is no per-class compareTo override to forget to
  * update when adding a new field.
  */
+/*Ticket ADV018*/
+
+
 public sealed interface TradeType
         extends Comparable<TradeType>
         permits EquityTrade, FXTrade, BondTrade, DerivativeTrade {
 
-    /** Stable natural key. Drives equals/hashCode. */
+    /** Stable natural key. Drives equals/hashCode */
     TradeRef tradeRef();
 
     /** Notional value of the trade for reconciliation summaries. */
