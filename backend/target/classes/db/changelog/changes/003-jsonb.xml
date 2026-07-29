@@ -28,6 +28,7 @@
             <sql>DROP INDEX IF EXISTS idx_instruments_metadata_gin;</sql>
             <sql>ALTER TABLE instruments DROP COLUMN metadata;</sql>
         </rollback>
+            
     </changeSet>
 
 </databaseChangeLog>

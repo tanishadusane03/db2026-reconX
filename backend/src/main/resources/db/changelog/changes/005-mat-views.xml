@@ -38,7 +38,12 @@
         ]]></sql>
         <rollback>
             <sql>DROP MATERIALIZED VIEW IF EXISTS mv_daily_recon_summary;</sql>
+               
         </rollback>
+         <rollback>
+        DROP INDEX IF EXISTS idx_instruments_metadata;
+        ALTER TABLE instruments DROP COLUMN IF EXISTS metadata;
+    </rollback>
     </changeSet>
 
 </databaseChangeLog>
