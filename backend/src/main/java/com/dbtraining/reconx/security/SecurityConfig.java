@@ -34,14 +34,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-
-    /**
-     * Existing Day-1 permissive security configuration.
-     * Keep unchanged for now.
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
         http
