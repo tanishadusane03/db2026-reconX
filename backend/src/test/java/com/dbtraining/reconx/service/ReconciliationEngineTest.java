@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +41,22 @@ class ReconciliationEngineTest {
     void testReconcile_emptyInternal_returnsEmpty() {
         // TODO(TICKET-ADV040): empty internal + empty external -> reconcile returns an empty list.
         org.junit.jupiter.api.Assertions.fail("TICKET-ADV040 not implemented yet");
+    }
+
+    @Test
+    void testReconcileByCounterparty_exactMatch_returnsMatched() {
+        Map<Long, List<TradeType>> internalByCp = Map.of(1L,
+                List.of((TradeType) equity("EQU-20260603-0001", "100.00", "10")));
+        Map<Long, List<TradeType>> externalByCp = Map.of(1L,
+                List.of((TradeType) equity("EQU-20260603-0001", "100.00", "10")));
+
+        List<ReconResult> results = engine.reconcileByCounterparty(
+                internalByCp,
+                externalByCp,
+                ReconciliationRule.EXACT)
+                .join();
+
+        assertThat(results).containsExactly(ReconResult.matched("EQU-20260603-0001"));
     }
 
     private EquityTrade equity(String ref, String price, String qty) {
