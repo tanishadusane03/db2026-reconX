@@ -11,24 +11,26 @@
 #          Liquibase runs, sample users are seeded.
 # =============================================================================
 spring:
-  application:
-    name: reconx
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  application:
+    name: reconx-api
 
   # TICKET-ADV012 — Liquibase classpath wiring (the classic starter bug is missing the
   # `classpath:` prefix here, which causes a silent skip on JAR builds).
   liquibase:
-    change-log: classpath:/db/changelog/db.changelog-master.xml
-    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
 
   jpa:
-    open-in-view: false
-    hibernate:
-      ddl-auto: validate
+    open-in-view: false                   # default true — turn off in services
     properties:
-      hibernate.format_sql: true
-      hibernate.jdbc.time_zone: UTC
+      hibernate:
+        jdbc.time_zone: UTC
+        format_sql: true
+
+  sql:
+    init:
+      mode: never       
 
   # ADV081-ADV082 — Caffeine cache config; per-cache spec overrides the global one.
   cache:
@@ -56,6 +58,7 @@ spring:
         spring.json.value.default.type: com.dbtraining.reconx.dto.TradeEvent
 
 server:
+  port: 8080
   servlet:
     context-path: /api
 
@@ -68,11 +71,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,env,loggers
-      base-path: /actuator
+        include: health, info, metrics, prometheus
   endpoint:
     health:
-      show-details: when_authorized
+      show-details: when-authorized
       probes:
         enabled: true
   metrics:

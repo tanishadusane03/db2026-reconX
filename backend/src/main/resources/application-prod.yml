@@ -6,17 +6,13 @@
 # =============================================================================
 spring:
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
-    hikari:
-      maximum-pool-size: 30
-      connection-timeout: 3000
-      leak-detection-threshold: 30000
+    url: ${RECONX_DB_URL}                 # no defaults — fail fast if unset
+    username: ${RECONX_DB_USER}
+    password: ${RECONX_DB_PASSWORD}
   jpa:
-    properties:
-      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
-      hibernate.jdbc.batch_size: 100
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
 
 reconx:
   security:
@@ -32,5 +28,5 @@ management:
 
 logging:
   level:
-    com.dbtraining.reconx: INFO
     root: WARN
+    com.dbtraining.reconx: INFO
