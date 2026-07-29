@@ -97,8 +97,8 @@
       return res.json();
     })
     .then(function (data) {
-      // PagedResponse wraps content in a .content array; plain array also accepted.
-      rows = data.content || data;
+      // PagedResponse wraps trades in a .items array; plain array also accepted.
+      rows = data.items || data;
       renderRows();
     })
     .catch(function () {
