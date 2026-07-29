@@ -1,2 +1,11 @@
+
+# Maven
 backend/target/
+
+# Node
 frontend/node_modules/
+
+# General
+*.class
+*.log
+
