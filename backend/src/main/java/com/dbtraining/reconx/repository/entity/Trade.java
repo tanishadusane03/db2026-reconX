@@ -2,6 +2,7 @@ package com.dbtraining.reconx.repository.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -36,7 +37,7 @@ import java.util.Objects;
 })
 @EntityListeners(AuditingEntityListener.class)
 // re-enable when envers tables are migrated
-@Audited
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 public class Trade {
 
     @Id
@@ -71,11 +72,12 @@ public class Trade {
     @Column(name = "created_at", updatable = false,nullable = false)
     private Instant createdAt;
 
-
-
     @LastModifiedDate
     @Column(name = "modified_at")
     private Instant modifiedAt;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 
     public Trade() {}
 
@@ -92,6 +94,7 @@ public class Trade {
     public Instant getDeletedAt()        { return deletedAt; }
     public Instant getCreatedAt()        { return createdAt; }
     public Instant getModifiedAt()       { return modifiedAt; }
+    
 
     public void setTradeRef(String v)         { this.tradeRef = v; }
     public void setInstrument(Instrument v)   { this.instrument = v; }
@@ -100,7 +103,8 @@ public class Trade {
     public void setPrice(BigDecimal v)        { this.price = v; }
     public void setTradeDate(LocalDate v)     { this.tradeDate = v; }
     public void setStatus(TradeStatus v)           { this.status = v; }
-
+    public void setDeletedAt(Instant deletedAt)   { this.deletedAt = deletedAt; }
+    
     
     @Override
     public boolean equals(Object o) {

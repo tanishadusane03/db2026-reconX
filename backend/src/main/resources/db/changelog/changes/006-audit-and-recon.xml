@@ -76,4 +76,17 @@
         </rollback>
     </changeSet>
 
+
+    <changeSet id="006-create-revinfo" author="trainer">
+
+    <createTable tableName="revinfo">
+        <column name="rev" type="INT">
+            <constraints primaryKey="true" nullable="false"/>
+        </column>
+
+        <column name="revtstmp" type="BIGINT"/>
+    </createTable>
+
+</changeSet>
+
 </databaseChangeLog>
