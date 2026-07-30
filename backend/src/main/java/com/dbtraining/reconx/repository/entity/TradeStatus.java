@@ -1,5 +1,8 @@
 package com.dbtraining.reconx.repository.entity;
 
 public enum TradeStatus {
-    PENDING
+    PENDING,
+    MATCHED,
+    UNMATCHED,
+    DISPUTED
 }

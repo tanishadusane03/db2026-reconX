@@ -8,16 +8,20 @@ import java.time.LocalDate;
 public record TradeResponse(
         Long id,
         String tradeRef,
-        Long instrumentId,
-        String instrumentSymbol,
+
         Long counterpartyId,
         String counterpartyName,
-        String assetClass,
-        String side,
+
+        Long instrumentId,
+        String instrumentSymbol,
+
         BigDecimal quantity,
         BigDecimal price,
+
         LocalDate tradeDate,
+
         String status,
+
         Instant createdAt,
         Instant modifiedAt
 ) {}
