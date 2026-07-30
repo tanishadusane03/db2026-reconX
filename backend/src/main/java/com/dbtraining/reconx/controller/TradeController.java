@@ -36,6 +36,7 @@ import java.util.Map;
 @RequestMapping("/v1/trades")
 @Tag(name = "trades", description = "Trade CRUD and search")
 @SecurityRequirement(name = "bearerAuth")
+
 public class TradeController {
 
     private final TradeService service;
@@ -58,7 +59,9 @@ public class TradeController {
         //   and wrap the resulting Page<Trade> via PagedResponse.from(page, mapper::toResponse).
         //   For Day 1 return an empty PagedResponse so the React grid renders
         //   "no trades match" while the JPA + Specifications work is still pending.
-        return new PagedResponse<>(List.of(), 0, 20, 0, 0);
+         
+        Page<Trade> page = service.list(from, to, status, counterpartyId, pageable);
+        return PagedResponse.from(page, mapper::toResponse);
     }
 
     @PostMapping
