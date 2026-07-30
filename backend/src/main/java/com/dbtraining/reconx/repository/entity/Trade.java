@@ -2,6 +2,7 @@ package com.dbtraining.reconx.repository.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -9,7 +10,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-
+import java.util.Objects;
 /**
  * ============================================================================
  * TICKET-ADV050 — Trade JPA entity (with @ManyToOne, @CreatedDate, @LastModifiedDate)
@@ -30,10 +31,14 @@ import java.time.LocalDate;
  * ============================================================================
  */
 @Entity
-@Table(name = "trades")
+@Table(name = "trades", indexes = {
+    @Index(name = "idx_trades_trade_date", columnList = "trade_date"),
+    @Index(name = "idx_trades_status", columnList = "status")
+})
 @EntityListeners(AuditingEntityListener.class)
 // @org.hibernate.envers.Audited                  // re-enable when envers tables are migrated
 @SQLRestriction("deleted_at IS NULL")
+@Audited
 public class Trade {
 
     @Id
@@ -44,18 +49,12 @@ public class Trade {
     private String tradeRef;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "instrument_id")
+    @JoinColumn(name = "instrument_id",nullable = false)
     private Instrument instrument;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "counterparty_id")
+    @JoinColumn(name = "counterparty_id", nullable = false)
     private Counterparty counterparty;
-
-    @Column(name = "asset_class", nullable = false, length = 20)
-    private String assetClass;
-
-    @Column(nullable = false, length = 4)
-    private String side;
 
     @Column(nullable = false, precision = 18, scale = 4)
     private BigDecimal quantity;
@@ -66,15 +65,16 @@ public class Trade {
     @Column(name = "trade_date", nullable = false)
     private LocalDate tradeDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status = "PENDING";
+    private TradeStatus status = TradeStatus.PENDING;
+
+    @CreatedDate
+    @Column(name = "created_at", updatable = false,nullable = false)
+    private Instant createdAt;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
-
-    @CreatedDate
-    @Column(name = "created_at", updatable = false)
-    private Instant createdAt;
 
     @LastModifiedDate
     @Column(name = "modified_at")
@@ -89,12 +89,10 @@ public class Trade {
     public String getTradeRef()          { return tradeRef; }
     public Instrument getInstrument()    { return instrument; }
     public Counterparty getCounterparty(){ return counterparty; }
-    public String getAssetClass()        { return assetClass; }
-    public String getSide()              { return side; }
     public BigDecimal getQuantity()      { return quantity; }
     public BigDecimal getPrice()         { return price; }
     public LocalDate getTradeDate()      { return tradeDate; }
-    public String getStatus()            { return status; }
+    public TradeStatus getStatus()            { return status; }
     public Instant getDeletedAt()        { return deletedAt; }
     public Instant getCreatedAt()        { return createdAt; }
     public Instant getModifiedAt()       { return modifiedAt; }
@@ -102,10 +100,19 @@ public class Trade {
     public void setTradeRef(String v)         { this.tradeRef = v; }
     public void setInstrument(Instrument v)   { this.instrument = v; }
     public void setCounterparty(Counterparty v){ this.counterparty = v; }
-    public void setAssetClass(String v)       { this.assetClass = v; }
-    public void setSide(String v)             { this.side = v; }
     public void setQuantity(BigDecimal v)     { this.quantity = v; }
     public void setPrice(BigDecimal v)        { this.price = v; }
     public void setTradeDate(LocalDate v)     { this.tradeDate = v; }
-    public void setStatus(String v)           { this.status = v; }
+    public void setStatus(TradeStatus v)           { this.status = v; }
+
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Trade other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override public int hashCode() { return Objects.hash(id); }
 }
+
