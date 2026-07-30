@@ -6,6 +6,9 @@ import com.dbtraining.reconx.model.TradeType;
 import io.micrometer.core.annotation.Timed;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +36,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class ReconciliationEngine {
-
+    private final ExecutorService executor =
+        Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors());
     @Timed(value = "reconciliation.duration", description = "Wall time of reconcile()",
            percentiles = {0.5, 0.95, 0.99}, histogram = true)
     public List<ReconResult> reconcile(List<TradeType> internal,
@@ -44,12 +49,34 @@ public class ReconciliationEngine {
         //   over `internal` and call matchOne(in, externalByRef.get(...), rule)
         //   for each. Guard against null/empty inputs (TICKET-ADV047).
         //   HINT:
-        //     Map<String, TradeType> externalByRef = external.stream()
-        //         .collect(Collectors.toMap(t -> t.tradeRef().value(), Function.identity(), (a, b) -> a));
-        //     return internal.parallelStream()
-        //         .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
+            Map<String, TradeType> externalByRef = external.stream()
+                .collect(Collectors.toMap(t -> t.tradeRef().value(), Function.identity(), (a, b) -> a));
+            return internal.parallelStream()
+                .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
+                .toList();
+        // List<CompletableFuture<List<ReconResult>>> futures =
+        // internalByCp.entrySet().stream()
+        //         .map(entry ->
+        //                 CompletableFuture.supplyAsync(
+        //                         () -> reconcile(
+        //                                 entry.getValue(),
+        //                                 externalByCp.getOrDefault(entry.getKey(), List.of()),
+        //                                 rule
+        //                         ),
+        //                         executor
+        //                 )
+        //         )
         //         .toList();
-        throw new UnsupportedOperationException("TICKET-ADV033");
+
+// return CompletableFuture
+//         .allOf(futures.toArray(CompletableFuture[]::new))
+//         .thenApply(v ->
+//                 futures.stream()
+//                         .flatMap(f -> f.join().stream())
+//                         .toList()
+//         );
+
+    // throw new UnsupportedOperationException("TICKET-ADV033");
     }
 
     /**
@@ -65,7 +92,28 @@ public class ReconciliationEngine {
         //   CompletableFuture.supplyAsync(() -> reconcile(...)). Combine via
         //   CompletableFuture.allOf(...).thenApply(v -> futures.stream()
         //       .flatMap(f -> f.join().stream()).toList()).
-        throw new UnsupportedOperationException("TICKET-ADV037");
+        // throw new UnsupportedOperationException("TICKET-ADV037");
+        List<CompletableFuture<List<ReconResult>>> futures =
+        internalByCp.entrySet().stream()
+                .map(entry ->
+                        CompletableFuture.supplyAsync(
+                                () -> reconcile(
+                                        entry.getValue(),
+                                        externalByCp.getOrDefault(entry.getKey(), List.of()),
+                                        rule
+                                ),
+                                executor
+                        )
+                )
+                .toList();
+
+return CompletableFuture
+        .allOf(futures.toArray(CompletableFuture[]::new))
+        .thenApply(v ->
+                futures.stream()
+                        .flatMap(f -> f.join().stream())
+                        .toList()
+        );
     }
 
     private ReconResult matchOne(TradeType internal, TradeType external, ReconciliationRule rule) {
@@ -83,4 +131,7 @@ public class ReconciliationEngine {
         //   omit a case and the build fails.
         throw new UnsupportedOperationException("TICKET-ADV018");
     }
+    public void shutdown() {
+    executor.shutdown();
+}
 }
