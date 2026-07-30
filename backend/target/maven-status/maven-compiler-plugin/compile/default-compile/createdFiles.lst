@@ -1,6 +1,5 @@
 com/dbtraining/reconx/dto/ReconResult.class
 com/dbtraining/reconx/security/JwtAuthenticationFilter.class
-com/dbtraining/reconx/model/TradeFactory$1.class
 com/dbtraining/reconx/exception/InvalidTradeException.class
 com/dbtraining/reconx/service/ReconciliationEngine.class
 com/dbtraining/reconx/model/BondTrade.class
