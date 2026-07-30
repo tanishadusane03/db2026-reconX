@@ -1,7 +1,6 @@
 package com.dbtraining.reconx.repository.entity;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -36,8 +35,7 @@ import java.util.Objects;
     @Index(name = "idx_trades_status", columnList = "status")
 })
 @EntityListeners(AuditingEntityListener.class)
-// @org.hibernate.envers.Audited                  // re-enable when envers tables are migrated
-@SQLRestriction("deleted_at IS NULL")
+// re-enable when envers tables are migrated
 @Audited
 public class Trade {
 
@@ -73,8 +71,7 @@ public class Trade {
     @Column(name = "created_at", updatable = false,nullable = false)
     private Instant createdAt;
 
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
+
 
     @LastModifiedDate
     @Column(name = "modified_at")
@@ -83,8 +80,7 @@ public class Trade {
     public Trade() {}
 
     /** Soft-delete: set deletedAt so @SQLRestriction filters this out. */
-    public void softDelete() { this.deletedAt = Instant.now(); }
-
+    
     public Long getId()                  { return id; }
     public String getTradeRef()          { return tradeRef; }
     public Instrument getInstrument()    { return instrument; }
