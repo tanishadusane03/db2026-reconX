@@ -35,7 +35,11 @@ import java.util.stream.Collectors;
 @Service
 public class ReconciliationEngine {
 
+      private final ReconMetrics reconMetrics;
 
+      public ReconciliationEngine(ReconMetrics reconMetrics) {
+    this.reconMetrics = reconMetrics;
+           }
     public List<ReconResult> reconcile(List<TradeType> internal,
                                        List<TradeType> external,
                                        ReconciliationRule rule) {
@@ -50,7 +54,11 @@ public class ReconciliationEngine {
         //         .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
         //         .toList();
             
-                     if (internal == null || internal.isEmpty()) return List.of();
+                     return reconMetrics.reconciliationTimer().record(() -> {
+
+        if (internal == null || internal.isEmpty()) {
+            return List.of();
+        }
 
         Map<String, TradeType> externalByRef = (external == null ? List.<TradeType>of() : external)
                 .stream()
@@ -60,7 +68,8 @@ public class ReconciliationEngine {
                 .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
                 .toList();
         
-    }
+                                       });
+     }
 
     /**
      * TICKET-ADV037 — split by counterparty, reconcile each batch concurrently,
