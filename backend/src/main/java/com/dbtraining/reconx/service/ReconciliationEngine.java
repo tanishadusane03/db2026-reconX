@@ -4,6 +4,7 @@ import com.dbtraining.reconx.dto.ReconResult;
 import com.dbtraining.reconx.model.ReconciliationRule;
 import com.dbtraining.reconx.model.TradeType;
 import org.springframework.stereotype.Service;
+import com.dbtraining.reconx.observability.ReconMetrics;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -34,8 +35,7 @@ import java.util.stream.Collectors;
 @Service
 public class ReconciliationEngine {
 
-    reconMetrics.reconciliationTimer()
-        .record(() -> engine.reconcile(internal, external, rule));
+
     public List<ReconResult> reconcile(List<TradeType> internal,
                                        List<TradeType> external,
                                        ReconciliationRule rule) {
@@ -49,6 +49,7 @@ public class ReconciliationEngine {
         //     return internal.parallelStream()
         //         .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
         //         .toList();
+            
                      if (internal == null || internal.isEmpty()) return List.of();
 
         Map<String, TradeType> externalByRef = (external == null ? List.<TradeType>of() : external)
