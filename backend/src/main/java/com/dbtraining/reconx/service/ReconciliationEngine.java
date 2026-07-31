@@ -6,6 +6,9 @@ import com.dbtraining.reconx.model.TradeType;
 import org.springframework.stereotype.Service;
 import com.dbtraining.reconx.observability.ReconMetrics;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +39,12 @@ import java.util.stream.Collectors;
 public class ReconciliationEngine {
 
 
+    private final ExecutorService executor =
+        Executors.newFixedThreadPool(
+                Runtime.getRuntime().availableProcessors());
+    @Timed(value = "reconciliation.duration", description = "Wall time of reconcile()",
+           percentiles = {0.5, 0.95, 0.99}, histogram = true)
+
     public List<ReconResult> reconcile(List<TradeType> internal,
                                        List<TradeType> external,
                                        ReconciliationRule rule) {
@@ -44,11 +53,25 @@ public class ReconciliationEngine {
         //   over `internal` and call matchOne(in, externalByRef.get(...), rule)
         //   for each. Guard against null/empty inputs (TICKET-ADV047).
         //   HINT:
-        //     Map<String, TradeType> externalByRef = external.stream()
-        //         .collect(Collectors.toMap(t -> t.tradeRef().value(), Function.identity(), (a, b) -> a));
-        //     return internal.parallelStream()
-        //         .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
+            Map<String, TradeType> externalByRef = external.stream()
+                .collect(Collectors.toMap(t -> t.tradeRef().value(), Function.identity(), (a, b) -> a));
+            return internal.parallelStream()
+                .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
+                .toList();
+        // List<CompletableFuture<List<ReconResult>>> futures =
+        // internalByCp.entrySet().stream()
+        //         .map(entry ->
+        //                 CompletableFuture.supplyAsync(
+        //                         () -> reconcile(
+        //                                 entry.getValue(),
+        //                                 externalByCp.getOrDefault(entry.getKey(), List.of()),
+        //                                 rule
+        //                         ),
+        //                         executor
+        //                 )
+        //         )
         //         .toList();
+
             
                      if (internal == null || internal.isEmpty()) return List.of();
 
@@ -59,7 +82,17 @@ public class ReconciliationEngine {
         return internal.parallelStream()
                 .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
                 .toList();
-        
+
+// return CompletableFuture
+//         .allOf(futures.toArray(CompletableFuture[]::new))
+//         .thenApply(v ->
+//                 futures.stream()
+//                         .flatMap(f -> f.join().stream())
+//                         .toList()
+//         );
+
+    // throw new UnsupportedOperationException("TICKET-ADV033");
+
     }
 
     /**
@@ -76,6 +109,7 @@ public class ReconciliationEngine {
             Map<Long, List<TradeType>> internalByCp,
             Map<Long, List<TradeType>> externalByCp,
             ReconciliationRule rule) {
+
         if (internalByCp == null || internalByCp.isEmpty()) {
             return CompletableFuture.completedFuture(List.of());
         }
@@ -88,6 +122,34 @@ public class ReconciliationEngine {
                 .thenApply(v -> futures.stream()
                         .flatMap(f -> f.join().stream())
                         .collect(Collectors.toCollection(ArrayList::new)));
+
+        // TODO(TICKET-ADV037): for each counterparty key in internalByCp launch a
+        //   CompletableFuture.supplyAsync(() -> reconcile(...)). Combine via
+        //   CompletableFuture.allOf(...).thenApply(v -> futures.stream()
+        //       .flatMap(f -> f.join().stream()).toList()).
+        // throw new UnsupportedOperationException("TICKET-ADV037");
+        List<CompletableFuture<List<ReconResult>>> futures =
+        internalByCp.entrySet().stream()
+                .map(entry ->
+                        CompletableFuture.supplyAsync(
+                                () -> reconcile(
+                                        entry.getValue(),
+                                        externalByCp.getOrDefault(entry.getKey(), List.of()),
+                                        rule
+                                ),
+                                executor
+                        )
+                )
+                .toList();
+
+return CompletableFuture
+        .allOf(futures.toArray(CompletableFuture[]::new))
+        .thenApply(v ->
+                futures.stream()
+                        .flatMap(f -> f.join().stream())
+                        .toList()
+        );
+
     }
 
     private ReconResult matchOne(TradeType internal, TradeType external, ReconciliationRule rule) {
@@ -113,6 +175,7 @@ public class ReconciliationEngine {
         //   (EquityTrade, FXTrade, BondTrade, DerivativeTrade) and return a
         //   BigDecimal[]{price, qty}. The compiler enforces exhaustiveness —
         //   omit a case and the build fails.
+
         return switch (t) {
             case com.dbtraining.reconx.model.EquityTrade e     -> new BigDecimal[]{e.price(),  e.quantity()};
             case com.dbtraining.reconx.model.FXTrade fx        -> new BigDecimal[]{fx.fxRate(), fx.notionalCcy1()};
@@ -121,3 +184,11 @@ public class ReconciliationEngine {
         };
    }
 }
+
+        throw new UnsupportedOperationException("TICKET-ADV018");
+    }
+    public void shutdown() {
+    executor.shutdown();
+}
+}
+
