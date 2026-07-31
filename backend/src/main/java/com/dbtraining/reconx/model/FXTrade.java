@@ -19,8 +19,24 @@ import java.util.Objects;
  * OBSERVE: notional().currency() == ccy2; .amount() == notionalCcy1 * fxRate.
  * ============================================================================
  */
+ 
 public final class FXTrade implements TradeType {
-
+    /**
+ * Represents a foreign exchange trade in the reconciliation domain.
+ *
+ * WHAT:
+ * Models an FX transaction containing the details required to identify,
+ * compare, and reconcile a foreign exchange trade.
+ *
+ * HOW:
+ * Implements {@link TradeType} as part of the sealed trade hierarchy.
+ * The object represents an immutable domain entity containing FX-specific
+ * trade information.
+ *
+ * WHY:
+ * Allows foreign exchange trades to participate in the common reconciliation
+ * process while keeping the trade model specific to FX transactions.
+*/
     private final TradeRef tradeRef;
     private final Currency ccy1;
     private final Currency ccy2;
@@ -41,7 +57,19 @@ public final class FXTrade implements TradeType {
         this.counterpartyId = b.counterpartyId;
     }
 
-    public static Builder builder() { return new Builder(); }
+    public static Builder builder() { 
+        /**
+        * Creates a new builder for constructing an instance of this class.
+        *
+        * HOW:
+        * Returns a fresh builder object that allows required fields to be
+        * configured before creating the immutable domain object.
+        *
+        * @return a new builder instance.
+        */
+        
+        return new Builder(); 
+    }
 
     @Override public TradeRef tradeRef()     { return tradeRef; }
     @Override public LocalDate tradeDate()   { return tradeDate; }

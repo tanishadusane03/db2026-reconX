@@ -22,6 +22,17 @@ import java.util.Objects;
  * ============================================================================
  */
 public record Money(BigDecimal amount, Currency currency) {
+    /**
+ * Represents monetary value with an amount and currency.
+ *
+ * WHAT: Immutable money representation.
+ * HOW: Stores amount and currency and validates that amount is not negative.
+ * WHY: Prevents invalid monetary values from entering reconciliation logic.
+ *
+ * @param amount monetary value
+ * @param currency currency of the amount
+ */
+
 
     public Money {
         Objects.requireNonNull(amount, "amount");

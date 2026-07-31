@@ -32,6 +32,24 @@ public sealed interface TradeType
         extends Comparable<TradeType>
         permits EquityTrade, FXTrade, BondTrade, DerivativeTrade {
 
+            /**
+ * Represents the root contract for all supported trade types.
+ *
+ * WHAT:
+ * Defines the common behavior shared by all trade implementations,
+ * including equity, FX, bond, and derivative trades.
+ *
+ * HOW:
+ * Implemented as a sealed interface that restricts permitted implementations
+ * to approved trade classes. Extends Comparable to provide a common ordering
+ * rule across trades.
+ *
+ * WHY:
+ * Ensures the reconciliation engine can safely process only known trade
+ * types. Sealing allows the compiler to verify that all supported trade
+ * cases are handled.
+ */
+
     /** Stable natural key. Drives equals/hashCode. */
     TradeRef tradeRef();
 

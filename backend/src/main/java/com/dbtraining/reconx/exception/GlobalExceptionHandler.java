@@ -19,6 +19,23 @@ import java.util.stream.Collectors;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    /**
+ * Handles application-wide exceptions and converts them into appropriate
+ * responses.
+ *
+ * WHAT:
+ * Provides centralized exception handling for errors raised during
+ * application execution.
+ *
+ * HOW:
+ * Uses exception handler methods to intercept application exceptions and
+ * produce consistent error responses for callers.
+ *
+ * WHY:
+ * Avoids duplicated exception handling logic across controllers and ensures
+ * errors are returned in a predictable format.
+ */
+
 
     @ExceptionHandler(TradeNotFoundException.class)
     public ProblemDetail notFound(TradeNotFoundException ex) {

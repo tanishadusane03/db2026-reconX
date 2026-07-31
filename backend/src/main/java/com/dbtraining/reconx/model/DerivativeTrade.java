@@ -15,8 +15,39 @@ import java.util.Objects;
  * ============================================================================
  */
 public final class DerivativeTrade implements TradeType {
+    /**
+ * Represents a derivative trade in the reconciliation domain.
+ *
+ * WHAT:
+ * Models a derivative transaction containing the trade reference,
+ * instrument information, pricing details, quantity, option information,
+ * and counterparty details required for reconciliation.
+ *
+ * HOW:
+ * Implements {@link TradeType} as part of the sealed trade hierarchy.
+ * Instances represent immutable derivative trades created with validated
+ * domain data.
+ *
+ * WHY:
+ * Allows derivative instruments to participate in the same reconciliation
+ * workflow as other supported asset classes while preserving derivative-
+ * specific attributes.
+ */
 
     public enum OptionType { CALL, PUT }
+    /**
+ * Defines the type of derivative option.
+ *
+ * WHAT:
+ * Represents whether an option gives the holder the right to buy or sell
+ * the underlying asset.
+ *
+ * HOW:
+ * Implemented as an enum with two supported values: CALL and PUT.
+ *
+ * WHY:
+ * Provides a type-safe way to represent derivative option direction.
+ */
 
     private final TradeRef tradeRef;
     private final String underlying;
@@ -42,7 +73,19 @@ public final class DerivativeTrade implements TradeType {
         this.counterpartyId = b.counterpartyId;
     }
 
-    public static Builder builder() { return new Builder(); }
+    public static Builder builder() { 
+        /**
+        * Creates a new builder for constructing an instance of this class.
+        *
+        * HOW:
+        * Returns a fresh builder object that allows required fields to be
+        * configured before creating the immutable domain object.
+        *
+        * @return a new builder instance.
+        */
+        
+        return new Builder(); 
+    }
 
     @Override public TradeRef tradeRef()     { return tradeRef; }
     @Override public LocalDate tradeDate()   { return tradeDate; }

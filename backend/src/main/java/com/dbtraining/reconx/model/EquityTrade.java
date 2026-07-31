@@ -23,7 +23,26 @@ import java.util.Objects;
  * TICKET-ADV028 — equals/hashCode from tradeRef (Object methods on a regular class)
  * TICKET-ADV030 — toString() omits PII, prints reference/symbol/qty/price/side
  */
+
+ 
 public final class EquityTrade implements TradeType {
+    /**
+ * Represents an equity trade in the reconciliation domain.
+ *
+ * WHAT:
+ * Models an equity transaction containing trade reference, instrument
+ * symbol, price, quantity, currency, trade side, trade date, and
+ * counterparty information.
+ *
+ * HOW:
+ * Implements {@link TradeType} as part of the trade hierarchy.
+ * The object is immutable and is created through the Builder pattern,
+ * which validates required fields before construction.
+ *
+ * WHY:
+ * Ensures equity transactions are represented consistently and can be
+ * processed by the reconciliation engine alongside other trade types.
+ */
 
     private final TradeRef tradeRef;
     private final String instrumentSymbol;
@@ -45,7 +64,19 @@ public final class EquityTrade implements TradeType {
         this.counterpartyId   = b.counterpartyId;
     }
 
-    public static Builder builder() { return new Builder(); }
+    public static Builder builder() { 
+        /**
+        * Creates a new builder for constructing an instance of this class.
+        *
+        * HOW:
+        * Returns a fresh builder object that allows required fields to be
+        * configured before creating the immutable domain object.
+        *
+        * @return a new builder instance.
+        */
+        
+        return new Builder(); 
+    }
 
     @Override public TradeRef tradeRef()    { return tradeRef; }
     @Override public LocalDate tradeDate()  { return tradeDate; }

@@ -23,6 +23,22 @@ import java.util.Map;
  * ============================================================================
  */
 public final class TradeFactory {
+    /**
+ * Provides factory methods for creating trade objects.
+ *
+ * WHAT:
+ * Acts as a central creation point for different types of trades supported
+ * by the reconciliation domain.
+ *
+ * HOW:
+ * Uses factory methods to construct appropriate trade implementations
+ * without requiring callers to directly manage concrete trade classes.
+ *
+ * WHY:
+ * Separates object creation logic from business logic and provides a
+ * consistent way to create valid trade instances.
+ */
+
 
     private TradeFactory() { }
 

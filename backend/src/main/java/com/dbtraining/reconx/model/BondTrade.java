@@ -16,7 +16,25 @@ import java.util.Objects;
  * ============================================================================
  */
 public final class BondTrade implements TradeType {
-
+    /**
+    * Represents a bond trade in the reconciliation domain.
+    *
+    * WHAT:
+    * Stores the details required to represent and reconcile a bond transaction,
+    * including trade reference, instrument information, price, quantity,
+    * currency, and counterparty details.
+    *
+    * HOW:
+    * Implements the {@link TradeType} interface and represents one of the
+    * supported trade types handled by the reconciliation engine.
+    * The object is immutable and is created using the Builder pattern.
+    *
+    * WHY:
+    * Provides a structured representation of bond transactions so that the
+    * reconciliation engine can compare internal and external bond trades
+    * consistently with other asset types.
+    */
+ 
     private final TradeRef tradeRef;
     private final String isin;
     private final BigDecimal faceValue;
@@ -39,7 +57,19 @@ public final class BondTrade implements TradeType {
         this.counterpartyId = b.counterpartyId;
     }
 
-    public static Builder builder() { return new Builder(); }
+    public static Builder builder() { 
+        /**
+        * Creates a new builder for constructing an instance of this class.
+        *
+        * HOW:
+        * Returns a fresh builder object that allows required fields to be
+        * configured before creating the immutable domain object.
+        *
+        * @return a new builder instance.
+        */
+        
+        return new Builder(); 
+    }
 
     @Override public TradeRef tradeRef()     { return tradeRef; }
     @Override public LocalDate tradeDate()   { return tradeDate; }

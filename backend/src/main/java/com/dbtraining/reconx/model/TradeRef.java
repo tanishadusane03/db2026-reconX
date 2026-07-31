@@ -18,6 +18,18 @@ import java.util.regex.Pattern;
  * ============================================================================
  */
 public record TradeRef(String value) {
+    /**
+ * Represents the unique identifier of a trade.
+ *
+ * WHAT:
+ * Stores the business identifier used to identify a trade.
+ *
+ * HOW:
+ * Validates the format before creating a TradeRef object.
+ *
+ * WHY:
+ * Prevents invalid trade references from entering the reconciliation system.
+ */
 
     private static final Pattern PATTERN = Pattern.compile("^[A-Z]{3}-\\d{8}-\\d{4}$");
 
@@ -30,6 +42,13 @@ public record TradeRef(String value) {
     }
 
     public static TradeRef of(String value) {
+        /**
+        * Creates a TradeRef from the given text.
+        *
+        * @param value the trade reference string.
+        * @return a validated TradeRef object.
+        * @throws IllegalArgumentException if the format is invalid.
+         */
         return new TradeRef(value);
     }
 

@@ -16,6 +16,26 @@ import java.math.BigDecimal;
  * OBSERVE: PRICE_TOLERANCE_1PCT.matches(p, p*1.005) is true; *1.02 is false.
  * ============================================================================
  */
+
+
+ 
+ /**
+ * Defines the rules used to determine whether two trades match during
+ * reconciliation.
+ *
+ * WHAT:
+ * Represents the available matching strategies based on price and quantity
+ * tolerance levels.
+ *
+ * HOW:
+ * Each enum value defines acceptable differences between internal and
+ * external trades. The reconciliation engine uses these rules when comparing
+ * trade attributes.
+ *
+ * WHY:
+ * Keeps reconciliation matching criteria centralized and configurable
+ * instead of hard-coding comparison logic throughout the application.
+ */
 public enum ReconciliationRule {
 
     EXACT(BigDecimal.ZERO, BigDecimal.ZERO),
