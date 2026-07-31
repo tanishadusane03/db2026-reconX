@@ -26,7 +26,6 @@ import com.dbtraining.reconx.repository.entity.TradeStatus;
 
 import static com.dbtraining.reconx.repository.TradeSpecifications.*;
 
-
 /**
  * ============================================================================
  * TICKET-ADV064 — TradeService.create (POST endpoint backing)
@@ -85,11 +84,10 @@ public class TradeService {
                             new TradeNotFoundException("counterparty=" + req.counterpartyId()))
     );
 
-    
-    trade.setQuantity(req.quantity());
-    trade.setPrice(req.price());
-    trade.setTradeDate(req.tradeDate());
-   trade.setStatus(TradeStatus.PENDING);
+trade.setQuantity(req.quantity());
+trade.setPrice(req.price());
+trade.setTradeDate(req.tradeDate());
+trade.setStatus(TradeStatus.PENDING);
 
     Trade saved = tradeRepo.save(trade);
 
@@ -134,7 +132,8 @@ public class TradeService {
                             new TradeNotFoundException("counterparty=" + req.counterpartyId()))
     );
 
-    
+
+
     trade.setQuantity(req.quantity());
     trade.setPrice(req.price());
     trade.setTradeDate(req.tradeDate());
@@ -161,7 +160,7 @@ public class TradeService {
             .orElseThrow(() ->
                     new TradeNotFoundException("id=" + id));
 
-    trade.setStatus(TradeStatus.valueOf(status));
+ trade.setStatus(TradeStatus.valueOf(status));
 
     Trade saved = tradeRepo.save(trade);
 
@@ -187,7 +186,7 @@ public void softDelete(Long id, String actor) {
             .orElseThrow(() ->
                     new TradeNotFoundException("id=" + id));
 
-    t.softDelete();
+    t.setDeletedAt(Instant.now());
 
     tradeRepo.save(t);
 
@@ -237,8 +236,6 @@ public void softDelete(Long id, String actor) {
                 .where(tradeDateBetween(from, to))
                 .and(hasStatus(status))
                 .and(hasCounterparty(counterpartyId));
-
-
         return tradeRepo.findAll(spec, pageable);
     }
 

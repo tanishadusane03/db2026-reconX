@@ -66,13 +66,7 @@ public PagedResponse<TradeResponse> list(
         @PageableDefault(size = 20, sort = "tradeDate", direction = Sort.Direction.DESC)
         Pageable pageable) {
 
-    Page<Trade> page = service.list(
-            from,
-            to,
-            status,
-            counterpartyId,
-            pageable
-    );
+v
 
     return PagedResponse.of(page, mapper::toResponse);
 }
