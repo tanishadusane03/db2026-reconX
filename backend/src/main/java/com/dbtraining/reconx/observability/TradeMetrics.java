@@ -45,6 +45,8 @@ public class TradeMetrics {
         this.tradeCreated = Counter.builder("trade_created_total")
                 .description("Total trades created")
                 .register(registry);
+    
+    
 
         this.tradeValue = DistributionSummary.builder("trade_value_total")
                 .description("Distribution of trade notional values")
@@ -60,6 +62,7 @@ public class TradeMetrics {
 
     public void incrementTradeCreated() {
         // TODO(TICKET-ADV083): increment the tradeCreated counter.
+        tradeCreated.increment();
     }
 
     public void recordTradeValue(double value) {
