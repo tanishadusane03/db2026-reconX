@@ -96,8 +96,7 @@ public class TradeService {
     metrics.incrementTradeCreated();
 
     metrics.recordTradeValue(
-        req.quantity().multiply(req.price())
-    );
+       saved.getQuantity().multiply(saved.getPrice()).doubleValue());
 
     events.publish(
         new TradeEvent(
