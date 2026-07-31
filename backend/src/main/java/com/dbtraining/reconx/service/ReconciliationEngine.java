@@ -1,11 +1,5 @@
 package com.dbtraining.reconx.service;
 
-import com.dbtraining.reconx.dto.ReconResult;
-import com.dbtraining.reconx.model.ReconciliationRule;
-import com.dbtraining.reconx.model.TradeType;
-import org.springframework.stereotype.Service;
-import com.dbtraining.reconx.observability.ReconMetrics;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +7,13 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.dbtraining.reconx.dto.ReconResult;
+import com.dbtraining.reconx.model.ReconciliationRule;
+import com.dbtraining.reconx.model.TradeType;
+import com.dbtraining.reconx.observability.ReconMetrics;
 
 /**
  * ============================================================================
