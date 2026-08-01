@@ -51,10 +51,8 @@ ARIA roles + aria-live for the trade feed
       </div>
     </section>
 
-    <section aria-labelledby="feed">
-      <h2 id="feed">Live trade feed</h2>
-      <!--  aria-live so screen readers announce new trades -->
-      <div id="trade-feed" role="status" aria-live="polite" aria-atomic="false"></div>
+    <section id="trade-feed" class="trade-feed" aria-labelledby="feed-title">
+       <h2 id="feed-title">Live trade feed</h2>
     </section>
   </main>
 
