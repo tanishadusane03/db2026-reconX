@@ -22,6 +22,7 @@ public interface TradeRepository
         extends JpaRepository<Trade, Long>, JpaSpecificationExecutor<Trade> {
 
     Optional<Trade> findByTradeRef(String tradeRef);
+    boolean existsByTradeRef(String tradeRef);
 
     @Query("""
         SELECT t FROM Trade t

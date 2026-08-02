@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+
 import com.dbtraining.reconx.dto.ReconResult;
 import com.dbtraining.reconx.model.ReconciliationRule;
 import com.dbtraining.reconx.model.TradeType;
@@ -38,9 +39,14 @@ public class ReconciliationEngine {
 
       private final ReconMetrics reconMetrics;
 
-      public ReconciliationEngine(ReconMetrics reconMetrics) {
-    this.reconMetrics = reconMetrics;
-           }
+      public ReconciliationEngine(ReconMetrics metrics) {
+    this.reconMetrics = metrics;
+}
+
+
+    public ReconciliationEngine() {
+    this.reconMetrics = null;
+}
     public List<ReconResult> reconcile(List<TradeType> internal,
                                        List<TradeType> external,
                                        ReconciliationRule rule) {
@@ -54,6 +60,10 @@ public class ReconciliationEngine {
         //     return internal.parallelStream()
         //         .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
         //         .toList();
+
+        if (reconMetrics == null) {
+        return reconcileInternal(internal, external, rule);
+        }
             
                      return reconMetrics.reconciliationTimer().record(() -> {
 
@@ -81,7 +91,35 @@ public class ReconciliationEngine {
      * TICKET-ADV037 — split by counterparty, reconcile each batch concurrently,
      * combine into a single result list. Caller passes one external feed per
      * counterparty (typical real-world shape).
+     * 
      */
+        private List<ReconResult> reconcileInternal(
+            List<TradeType> internal,
+            List<TradeType> external,
+            ReconciliationRule rule) {
+
+        if (internal == null || internal.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, TradeType> externalByRef =
+                (external == null ? List.<TradeType>of() : external)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                t -> t.tradeRef().value(),
+                                Function.identity(),
+                                (a, b) -> a
+                        ));
+
+        return internal.parallelStream()
+                .map(in -> matchOne(
+                        in,
+                        externalByRef.get(in.tradeRef().value()),
+                        rule))
+                .toList();
+    }
+
+
     public CompletableFuture<List<ReconResult>> reconcileByCounterparty(
             Map<Long, List<TradeType>> internalByCp,
             Map<Long, List<TradeType>> externalByCp,

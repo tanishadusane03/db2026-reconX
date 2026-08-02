@@ -6,6 +6,7 @@ import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.dbtraining.reconx.repository.entity.TradeStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -64,6 +65,9 @@ public class Trade {
     @Column(name = "trade_date", nullable = false)
     private LocalDate tradeDate;
 
+    @Column(name = "asset_class", nullable = false)
+    private String assetClass;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TradeStatus status = TradeStatus.PENDING;
@@ -79,6 +83,9 @@ public class Trade {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    @Column(nullable = false, length = 10)
+    private String side;
+
     public Trade() {}
 
     /** Soft-delete: set deletedAt so @SQLRestriction filters this out. */
@@ -91,9 +98,11 @@ public class Trade {
     public BigDecimal getPrice()         { return price; }
     public LocalDate getTradeDate()      { return tradeDate; }
     public TradeStatus getStatus()            { return status; }
+    public String getAssetClass()        { return assetClass; }
     public Instant getDeletedAt()        { return deletedAt; }
     public Instant getCreatedAt()        { return createdAt; }
     public Instant getModifiedAt()       { return modifiedAt; }
+    public String getSide()                { return side; }
     
 
     public void setTradeRef(String v)         { this.tradeRef = v; }
@@ -101,9 +110,11 @@ public class Trade {
     public void setCounterparty(Counterparty v){ this.counterparty = v; }
     public void setQuantity(BigDecimal v)     { this.quantity = v; }
     public void setPrice(BigDecimal v)        { this.price = v; }
+    public void setAssetClass(String v)       { this.assetClass = v; }
     public void setTradeDate(LocalDate v)     { this.tradeDate = v; }
     public void setStatus(TradeStatus v)           { this.status = v; }
     public void setDeletedAt(Instant deletedAt)   { this.deletedAt = deletedAt; }
+    public void setSide(String side) { this.side = side;}
     
     
     @Override

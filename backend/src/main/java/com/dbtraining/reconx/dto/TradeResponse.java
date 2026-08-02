@@ -15,6 +15,9 @@ public record TradeResponse(
         Long instrumentId,
         String instrumentSymbol,
 
+        String assetClass,
+        String side,
+
         BigDecimal quantity,
         BigDecimal price,
 

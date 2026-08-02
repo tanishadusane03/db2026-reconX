@@ -1,6 +1,8 @@
 package com.dbtraining.reconx.service;
 
+import com.dbtraining.reconx.repository.entity.TradeStatus;
 import com.dbtraining.reconx.dto.TradeRequest;
+import com.dbtraining.reconx.dto.TradeResponse;
 import com.dbtraining.reconx.exception.DuplicateTradeRefException;
 import com.dbtraining.reconx.exception.TradeNotFoundException;
 import com.dbtraining.reconx.kafka.TradeEventProducer;
@@ -66,6 +68,8 @@ public class TradeService {
         throw new DuplicateTradeRefException(req.tradeRef());
     }
 
+    
+
     Trade trade = new Trade();
 
     trade.setTradeRef(req.tradeRef());
@@ -89,7 +93,7 @@ public class TradeService {
     trade.setQuantity(req.quantity());
     trade.setPrice(req.price());
     trade.setTradeDate(req.tradeDate());
-    trade.setStatus("PENDING");
+    trade.setStatus(TradeStatus.PENDING);
 
     Trade saved = tradeRepo.save(trade);
 
@@ -112,6 +116,27 @@ public class TradeService {
 
     return saved;
     }
+
+    public TradeResponse create(TradeRequest req) {
+    Trade trade = create(req, "system");
+
+    return new TradeResponse(
+            trade.getId(),
+            trade.getTradeRef(),
+            trade.getCounterparty().getId(),
+            trade.getCounterparty().getName(),
+            trade.getInstrument().getId(),
+            trade.getInstrument().getSymbol(),
+            trade.getAssetClass(),
+            trade.getSide(),
+            trade.getQuantity(),
+            trade.getPrice(),
+            trade.getTradeDate(),
+            trade.getStatus().name(),
+            trade.getCreatedAt(),
+            trade.getModifiedAt()
+    );
+}
 
     public Trade update(Long id, TradeRequest req, String actor) {
         // TODO(TICKET-ADV065): load by id (throw TradeNotFoundException if missing),
@@ -171,7 +196,7 @@ public class TradeService {
             new TradeNotFoundException("id=" + id));
 
 
-    trade.setStatus(status);
+    trade.setStatus(TradeStatus.valueOf(status.toUpperCase()));
 
 
     Trade saved = tradeRepo.save(trade);
@@ -198,7 +223,7 @@ public class TradeService {
         //   publish a TRADE_CANCELLED event.
         Trade t = tradeRepo.findById(id)
             .orElseThrow(() -> new TradeNotFoundException("id=" + id));
-        t.softDelete();
+        t.setDeletedAt(Instant.now());
         tradeRepo.save(t);
         events.publish(new TradeEvent(UUID.randomUUID(), t.getTradeRef(),
             TradeEvent.EventType.TRADE_CANCELLED, Instant.now(), actor, null, null));
