@@ -16,6 +16,13 @@ TICKET-ADV100 — ARIA roles + aria-live for the trade feed
 <body>
   <header class="layout__header" role="banner">
     <h1 class="layout__title">ReconX</h1>
+
+    <!-- TICKET-ADV104 — SSE connection status -->
+  <span id="sse-status" class="sse-badge">
+    Connecting…
+  </span>
+
+  
     <nav class="layout__nav" aria-label="Main navigation">
       <a href="dashboard.html" aria-current="page">Dashboard</a>
       <a href="trades.html">Trades</a>
