@@ -5,7 +5,15 @@ function authHeaders() {
   // TODO(TICKET-ADV112): read 'reconx-token' from sessionStorage and return
   //                     { Authorization: `Bearer <token>` }. Return {} when
   //                     no token is set (login + signup endpoints).
-  return {};
+  const token = sessionStorage.getItem('reconx-token');
+
+  if (!token) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${token}`
+  };
 }
 
 async function request(method, path, body) {
@@ -14,14 +22,62 @@ async function request(method, path, body) {
   //   - serialise `body` via JSON.stringify when present
   //   - on !res.ok throw new Error(`HTTP ${res.status}: ${detail}`)
   //   - status 204 -> return null, otherwise return await res.json()
-  throw new Error('TICKET-ADV112 not implemented');
+
+
+  const headers = {
+    'Content-Type': 'application/json',
+    ...authHeaders()
+  };
+
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+
+
+  if (!res.ok) {
+
+    let detail = '';
+
+    try {
+      const data = await res.json();
+      detail = data.detail || '';
+    } catch {
+      detail = '';
+    }
+
+    throw new Error(
+      `HTTP ${res.status}: ${detail}`
+    );
+  }
+
+
+  if (res.status === 204) {
+    return null;
+  }
+
+
+  return await res.json();
+
 }
 
 export const api = {
-  login: (email, password)   => {
+  login: async (email, password)   => {
     // TODO(TICKET-ADV072): POST /auth/login with { email, password }.
-    throw new Error('TICKET-ADV072 not implemented');
+    const response = await request(
+      'POST',
+      '/auth/login',
+      { email, password }
+    );
+
+    sessionStorage.setItem('reconx-token', response.token);
+    sessionStorage.setItem('reconx-role', response.role);
+
+    return response;
   },
+
+  
   listTrades: (params = '')  => {
     // TODO(TICKET-ADV114): GET /v1/trades + `params` query string.
     throw new Error('TICKET-ADV114 not implemented');

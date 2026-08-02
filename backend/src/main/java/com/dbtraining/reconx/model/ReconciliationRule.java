@@ -1,6 +1,7 @@
 package com.dbtraining.reconx.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * ============================================================================
@@ -12,8 +13,9 @@ import java.math.BigDecimal;
  * HOW:     Enum-with-state pattern — instance fields + a behaviour method.
  * WHY:     Putting the rule on the enum keeps "what is a match" co-located
  *          with the rule's name, so the reconciliation engine is just:
- *          `if (rule.matches(internal, external)) ... matched ...`.
- * OBSERVE: PRICE_TOLERANCE_1PCT.matches(p, p*1.005) is true; *1.02 is false.
+ *          if (rule.matches(internal, external)) ... matched ...
+ * OBSERVE: PRICE_TOLERANCE_1PCT.matches(...) is true for 0.5% drift;
+ *          false for 2% drift.
  * ============================================================================
  */
 public enum ReconciliationRule {
@@ -29,29 +31,39 @@ public enum ReconciliationRule {
 
     ReconciliationRule(BigDecimal priceTolerancePct, BigDecimal qtyToleranceAbs) {
         this.priceTolerancePct = priceTolerancePct;
-        this.qtyToleranceAbs   = qtyToleranceAbs;
+        this.qtyToleranceAbs = qtyToleranceAbs;
     }
 
-    public BigDecimal priceTolerancePct() { return priceTolerancePct; }
-    public BigDecimal qtyToleranceAbs()   { return qtyToleranceAbs; }
+    public BigDecimal priceTolerancePct() {
+        return priceTolerancePct;
+    }
+
+    public BigDecimal qtyToleranceAbs() {
+        return qtyToleranceAbs;
+    }
 
     /**
      * Decide whether two prices/quantities are within this rule's tolerance.
-     * @return true if BOTH the price diff (as %) AND the qty diff (as abs)
-     *         are within tolerance.
+     *
+     * @return true if BOTH the price difference (as %) AND the quantity
+     *         difference (absolute) are within tolerance.
      */
-    public boolean matches(BigDecimal internalPrice, BigDecimal internalQty,
-                           BigDecimal externalPrice, BigDecimal externalQty) {
+    public boolean matches(BigDecimal internalPrice,
+                           BigDecimal internalQty,
+                           BigDecimal externalPrice,
+                           BigDecimal externalQty) {
+
         BigDecimal priceDiff = internalPrice.subtract(externalPrice).abs();
-        BigDecimal priceDiffPct;
-        if (internalPrice.signum() == 0) {
-            priceDiffPct = priceDiff.signum() == 0 ? BigDecimal.ZERO : BigDecimal.ONE;
-        } else {
-            priceDiffPct = priceDiff.divide(internalPrice, 10, java.math.RoundingMode.HALF_UP);
-        }
+
+        BigDecimal priceDiffPct = internalPrice.signum() == 0
+                ? BigDecimal.ZERO
+                : priceDiff.divide(internalPrice, 6, RoundingMode.HALF_UP);
+
         BigDecimal qtyDiff = internalQty.subtract(externalQty).abs();
 
-        return priceDiffPct.compareTo(priceTolerancePct) <= 0
-                && qtyDiff.compareTo(qtyToleranceAbs) <= 0;
+        boolean priceOk = priceDiffPct.compareTo(priceTolerancePct) <= 0;
+        boolean qtyOk = qtyDiff.compareTo(qtyToleranceAbs) <= 0;
+
+        return priceOk && qtyOk;
     }
 }

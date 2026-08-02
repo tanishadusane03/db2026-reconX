@@ -89,6 +89,9 @@ public class Trade {
     public Trade() {}
 
     /** Soft-delete: set deletedAt so @SQLRestriction filters this out. */
+    public void softDelete() {
+    this.deletedAt = Instant.now();
+}
     
     public Long getId()                  { return id; }
     public String getTradeRef()          { return tradeRef; }

@@ -14,6 +14,26 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
     },
     {
+  "type": "piechart",
+  "title": "Trades by status (ADV092)",
+  "datasource": {
+    "type": "prometheus",
+    "uid": "reconx-prometheus"
+  },
+  "targets": [
+    {
+      "expr": "sum by (status) (trades_by_status)",
+      "legendFormat": "{{status}}"
+    }
+  ],
+  "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 24
+  }
+},
+    {
       "type": "timeseries",
       "title": "API P95 latency (ADV088)",
       "datasource": { "type": "prometheus", "uid": "reconx-prometheus" },
@@ -56,9 +76,22 @@
     },
     {
       "type": "timeseries",
-      "title": "Trades created / sec (ADV089)",
+      "title": "API response time P50/P95/P99 (ADV088)",
       "datasource": { "type": "prometheus", "uid": "reconx-prometheus" },
-      "targets": [{ "expr": "sum(rate(trade_created_total[1m]))",  "legendFormat": "Trades created /s"}],
+      "targets": [
+  {
+    "expr": "histogram_quantile(0.50, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, uri))",
+    "legendFormat": "P50 {{uri}}"
+  },
+  {
+    "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, uri))",
+    "legendFormat": "P95 {{uri}}"
+  },
+  {
+    "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, uri))",
+    "legendFormat": "P99 {{uri}}"
+  }
+],
       "fieldConfig": {
     "defaults": {
       "unit": "reqps"
