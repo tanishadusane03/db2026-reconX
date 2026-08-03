@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.math.RoundingMode;
 
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import com.dbtraining.reconx.dto.ReconResult;
 import com.dbtraining.reconx.model.ReconciliationRule;
 import com.dbtraining.reconx.model.TradeType;
 import com.dbtraining.reconx.observability.ReconMetrics;
+import com.dbtraining.reconx.observability.ReconConfigMBean;
 
 /**
  * ============================================================================
@@ -36,11 +38,16 @@ import com.dbtraining.reconx.observability.ReconMetrics;
 @Service
 public class ReconciliationEngine {
 
-      private final ReconMetrics reconMetrics;
+    private final ReconMetrics reconMetrics;
+    private final ReconConfigMBean reconConfigMBean;
 
-      public ReconciliationEngine(ReconMetrics reconMetrics) {
-    this.reconMetrics = reconMetrics;
-           }
+    public ReconciliationEngine(
+            ReconMetrics reconMetrics,
+            ReconConfigMBean reconConfigMBean
+    ) {
+        this.reconMetrics = reconMetrics;
+        this.reconConfigMBean = reconConfigMBean;
+    }
     public List<ReconResult> reconcile(List<TradeType> internal,
                                        List<TradeType> external,
                                        ReconciliationRule rule) {
@@ -108,8 +115,29 @@ public class ReconciliationEngine {
         }
         BigDecimal[] in  = priceQty(internal);
         BigDecimal[] out = priceQty(external);
-        if (rule.matches(in[0], in[1], out[0], out[1])) {
-            return ReconResult.matched(ref);
+        BigDecimal runtimeTolerance =
+        BigDecimal.valueOf(reconConfigMBean.getPriceTolerance());
+        BigDecimal priceDiff =
+        in[0].subtract(out[0]).abs();
+
+        BigDecimal priceDiffPct =
+        in[0].signum() == 0
+                ? BigDecimal.ZERO
+                : priceDiff.divide(in[0], 6, RoundingMode.HALF_UP);
+
+
+        boolean priceMatches =
+        priceDiffPct.compareTo(runtimeTolerance) <= 0;
+
+
+        boolean qtyMatches =
+        in[1].subtract(out[1])
+                .abs()
+                .compareTo(rule.qtyToleranceAbs()) <= 0;
+
+
+       if(priceMatches && qtyMatches) {
+        return ReconResult.matched(ref);
         }
         return ReconResult.breakResult(ref, "VALUE_MISMATCH",
                 "internal price=%s qty=%s vs external price=%s qty=%s"
