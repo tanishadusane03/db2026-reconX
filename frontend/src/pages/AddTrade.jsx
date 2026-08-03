@@ -1,23 +1,15 @@
 // TICKET-ADV123 — React Hook Form + Yup validation.
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { withAuth } from '@components/withAuth.jsx';
 import { api } from '@services/apiService.js';
 
-// TODO(TICKET-ADV123): build a yup.object schema covering every field on the
-//   form. Suggested validators:
-//     tradeRef       — string, regex /^[A-Z]{3}-\d{8}-\d{4}$/ ("AAA-YYYYMMDD-NNNN")
-//     instrumentId   — integer, positive
-//     counterpartyId — integer, positive
-//     assetClass     — oneOf ['EQUITY','FX','BOND','DERIVATIVE']
-//     side           — oneOf ['BUY','SELL']
-//     quantity       — positive number
-//     price          — positive number
-//     tradeDate      — date
 const today = new Date();
 
+// Field names/types match TradeRequest (backend): tradeRef, instrumentId,
+// counterpartyId, assetClass, side, quantity, price, tradeDate.
 const schema = yup.object({
   tradeRef: yup
     .string()
@@ -27,9 +19,29 @@ const schema = yup.object({
       'Trade ref must match AAA-YYYYMMDD-NNNN'
     ),
 
-  instrument: yup
+  instrumentId: yup
+    .number()
+    .typeError('Instrument ID must be a number')
+    .integer('Instrument ID must be an integer')
+    .positive('Instrument ID must be positive')
+    .required('Instrument ID is required'),
+
+  counterpartyId: yup
+    .number()
+    .typeError('Counterparty ID must be a number')
+    .integer('Counterparty ID must be an integer')
+    .positive('Counterparty ID must be positive')
+    .required('Counterparty ID is required'),
+
+  assetClass: yup
     .string()
-    .required('Instrument is required'),
+    .oneOf(['EQUITY', 'FX', 'BOND', 'DERIVATIVE'], 'Select an asset class')
+    .required('Asset class is required'),
+
+  side: yup
+    .string()
+    .oneOf(['BUY', 'SELL'], 'Select a side')
+    .required('Side is required'),
 
   quantity: yup
     .number()
@@ -50,6 +62,9 @@ const schema = yup.object({
 });
 
 function AddTrade() {
+  const [submitError, setSubmitError] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -60,77 +75,93 @@ function AddTrade() {
     mode: 'onBlur',
     defaultValues: {
       tradeRef: '',
-      instrument: '',
+      instrumentId: '',
+      counterpartyId: '',
+      assetClass: 'EQUITY',
+      side: 'BUY',
       quantity: '',
       price: '',
       tradeDate: ''
     }
   });
+
   async function onSubmit(values) {
-    await api.createTrade(values);
-    reset();
+    setSubmitError(null);
+    setSubmitted(false);
+    try {
+      await api.createTrade({
+        ...values,
+        tradeDate: values.tradeDate.toISOString().slice(0, 10),
+      });
+      reset();
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err.message);
+    }
   }
 
   return (
     <section>
       <h2>Add trade</h2>
       <form onSubmit={handleSubmit(onSubmit)} className="trade-form">
-        {/* TODO(TICKET-ADV123): wire up <input {...register('tradeRef')} /> for
-            every field listed in the schema above. Render
-            errors.<field>.message under each input when present. */}
-          <label>
-  Trade ref
-  <input 
-    {...register('tradeRef')} 
-    placeholder="EQU-20260603-0001"
-  />
-</label>
+        <label>
+          Trade ref
+          <input {...register('tradeRef')} placeholder="EQU-20260603-0001" />
+        </label>
+        {errors.tradeRef && <span role="alert">{errors.tradeRef.message}</span>}
 
-{errors.tradeRef && (
-  <span role="alert">{errors.tradeRef.message}</span>
-)}
+        <label>
+          Instrument ID
+          <input type="number" {...register('instrumentId')} placeholder="1-15 (seeded)" />
+        </label>
+        {errors.instrumentId && <span role="alert">{errors.instrumentId.message}</span>}
 
+        <label>
+          Counterparty ID
+          <input type="number" {...register('counterpartyId')} placeholder="1-10 (seeded)" />
+        </label>
+        {errors.counterpartyId && <span role="alert">{errors.counterpartyId.message}</span>}
 
-<label>
-  Instrument
-  <input {...register('instrument')} />
-</label>
+        <label>
+          Asset class
+          <select {...register('assetClass')}>
+            <option value="EQUITY">EQUITY</option>
+            <option value="FX">FX</option>
+            <option value="BOND">BOND</option>
+            <option value="DERIVATIVE">DERIVATIVE</option>
+          </select>
+        </label>
+        {errors.assetClass && <span role="alert">{errors.assetClass.message}</span>}
 
-{errors.instrument && (
-  <span role="alert">{errors.instrument.message}</span>
-)}
+        <label>
+          Side
+          <select {...register('side')}>
+            <option value="BUY">BUY</option>
+            <option value="SELL">SELL</option>
+          </select>
+        </label>
+        {errors.side && <span role="alert">{errors.side.message}</span>}
 
+        <label>
+          Quantity
+          <input type="number" step="any" {...register('quantity')} />
+        </label>
+        {errors.quantity && <span role="alert">{errors.quantity.message}</span>}
 
-<label>
-  Quantity
-  <input type="number" {...register('quantity')} />
-</label>
+        <label>
+          Price
+          <input type="number" step="any" {...register('price')} />
+        </label>
+        {errors.price && <span role="alert">{errors.price.message}</span>}
 
-{errors.quantity && (
-  <span role="alert">{errors.quantity.message}</span>
-)}
+        <label>
+          Trade date
+          <input type="date" {...register('tradeDate')} />
+        </label>
+        {errors.tradeDate && <span role="alert">{errors.tradeDate.message}</span>}
 
-
-<label>
-  Price
-  <input type="number" {...register('price')} />
-</label>
-
-{errors.price && (
-  <span role="alert">{errors.price.message}</span>
-)}
-
-
-<label>
-  Trade Date
-  <input type="date" {...register('tradeDate')} />
-</label>
-
-{errors.tradeDate && (
-  <span role="alert">{errors.tradeDate.message}</span>
-)}
-        <label>Trade ref   <input {...register('tradeRef')} placeholder="EQU-20260603-0001" /></label>
-        {errors.tradeRef && <p className="form-error">{errors.tradeRef.message}</p>}
+        {submitError && <div role="alert" className="form-error">{submitError}</div>}
+        {submitted && <div role="status">Trade created.</div>}
 
         <button disabled={isSubmitting} type="submit">Submit</button>
       </form>
