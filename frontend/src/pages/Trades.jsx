@@ -1,16 +1,21 @@
 // TICKET-ADV114 — Compound DataTable.
 // TICKET-ADV117 — useDebouncedSearch.
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { withAuth } from '@components/withAuth.jsx';
 import DataTable from '@components/DataTable.jsx';
 import { useDebouncedSearch } from '@hooks/useDebouncedSearch.js';
 import { api } from '@services/apiService.js';
+import TradeRow from '@components/TradeRow.jsx';
 
 function Trades() {
   const [search, setSearch] = useState('');
   const debounced = useDebouncedSearch(search, 300);
   const [page, setPage] = useState(0);
   const [data, setData] = useState({ items: [], totalPages: 0 });
+  const [selectedId, setSelectedId] = useState(null);
+  const handleSelect = useCallback((id) => {
+  setSelectedId(id);
+}, []);
 
   // TODO(TICKET-ADV114 + ADV117): useEffect that:
   //   - builds a query string from `page` and `debounced` (status filter)
@@ -37,6 +42,15 @@ function Trades() {
         ]} />
         {/* TODO(TICKET-ADV114): render a DataTable.Body with `rows={data.items}`
             and a `render` prop that returns one <span> per column. */}
+            <DataTable.Body
+  rows={data.items}
+  renderRow={(trade) => (
+    <TradeRow
+      trade={trade}
+      onClick={handleSelect}
+    />
+  )}
+/>
         <DataTable.Pagination
           page={page}
           totalPages={Math.max(1, data.totalPages)}
