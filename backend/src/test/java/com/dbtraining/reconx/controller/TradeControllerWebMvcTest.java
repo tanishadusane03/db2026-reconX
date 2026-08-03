@@ -51,7 +51,8 @@ class TradeControllerWebMvcTest {
                 "BUY",
                 new BigDecimal("100.0000"),
                 new BigDecimal("245.50"),
-                LocalDate.now());
+                LocalDate.now(),
+                "PENDING");
     }
 
     @Test

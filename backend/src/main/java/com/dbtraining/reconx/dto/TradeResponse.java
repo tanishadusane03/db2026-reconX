@@ -22,6 +22,8 @@ public record TradeResponse(
 
         String status,
 
+        
+
         Instant createdAt,
         Instant modifiedAt
 ) {}

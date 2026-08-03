@@ -36,6 +36,7 @@ public interface TradeMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "modifiedAt", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
+     
     Trade toEntity(TradeRequest request);
 
     @Named("statusToString")

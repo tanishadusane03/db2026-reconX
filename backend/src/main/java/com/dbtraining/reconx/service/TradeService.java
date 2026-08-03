@@ -89,7 +89,19 @@ trade.setSide(req.side());
 trade.setQuantity(req.quantity());
 trade.setPrice(req.price());
 trade.setTradeDate(req.tradeDate());
-trade.setStatus(TradeStatus.PENDING);
+if (req.status() != null && !req.status().isEmpty()) {
+        try {
+            trade.setStatus(TradeStatus.valueOf(req.status()));
+        } catch (IllegalArgumentException e) {
+            // If invalid status, default to PENDING
+            trade.setStatus(TradeStatus.PENDING);
+        }
+    } else {
+        trade.setStatus(TradeStatus.PENDING);
+    }
+   
+
+  
 
     Trade saved = tradeRepo.save(trade);
 

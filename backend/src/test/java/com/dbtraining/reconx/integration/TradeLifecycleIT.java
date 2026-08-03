@@ -104,7 +104,8 @@ class TradeLifecycleIT {
             "BUY",
             new BigDecimal("100"),
             new BigDecimal("150.50"),
-            LocalDate.now()
+            LocalDate.now(),
+            "PENDING"
         );
 
 
