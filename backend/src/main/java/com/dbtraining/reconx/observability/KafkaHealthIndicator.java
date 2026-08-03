@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
  * ============================================================================
  */
 @Component("reconxKafka")
-@ConditionalOnProperty(name = "spring.kafka.bootstrap-servers")
+@ConditionalOnProperty(name = "reconx.kafka.health.enabled", havingValue = "true", matchIfMissing = true)
 public class KafkaHealthIndicator extends AbstractHealthIndicator {
 
     private final String bootstrapServers;

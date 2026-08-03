@@ -23,6 +23,8 @@ public interface TradeRepository
 
     Optional<Trade> findByTradeRef(String tradeRef);
 
+    boolean existsByTradeRef(String tradeRef);
+
     @Query("""
         SELECT t FROM Trade t
         WHERE t.tradeDate BETWEEN :from AND :to

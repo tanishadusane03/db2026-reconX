@@ -29,3 +29,15 @@ logging:
   level:
     com.dbtraining.reconx: DEBUG
     org.hibernate.SQL: DEBUG
+
+# Local development is intentionally self-contained: Kafka-backed event flows
+# are enabled in UAT/prod, while dev remains healthy without a local broker.
+management:
+  health:
+    kafka:
+      enabled: false
+
+reconx:
+  kafka:
+    health:
+      enabled: false

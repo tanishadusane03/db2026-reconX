@@ -2,12 +2,17 @@ package com.dbtraining.reconx.controller;
 
 import com.dbtraining.reconx.dto.TradeRequest;
 import com.dbtraining.reconx.dto.TradeResponse;
+import com.dbtraining.reconx.dto.TradeMapper;
+import com.dbtraining.reconx.repository.entity.Trade;
+import com.dbtraining.reconx.security.JwtTokenProvider;
+import com.dbtraining.reconx.security.SecurityConfig;
 import com.dbtraining.reconx.service.TradeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,16 +27,21 @@ import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import org.springframework.test.util.ReflectionTestUtils;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TradeController.class)
+@Import(SecurityConfig.class)
 class TradeControllerWebMvcTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockBean  private TradeService tradeService;
+    @MockBean  private TradeMapper tradeMapper;
+    @MockBean  private JwtTokenProvider jwtTokenProvider;
 
     private TradeRequest validRequest() {
         // Field order matches the current TradeRequest record:
@@ -51,28 +61,18 @@ class TradeControllerWebMvcTest {
     @Test
     @WithMockUser(roles = "TRADER")
     void testCreateTrade_authenticated_returns201() throws Exception {
-        // Field order matches the current TradeResponse record:
-        // (id, tradeRef, instrumentId, instrumentSymbol, counterpartyId, counterpartyName,
-        //  assetClass, side, quantity, price, tradeDate, status, createdAt, modifiedAt).
         Instant now = Instant.now();
-        when(tradeService.create(any())).thenReturn(
-                new TradeResponse(
-                        42L,
-                        "TRD-20260315-9999",
-                        1L,
-                        "SAP.DE",
-                        1L,
-                        "Apex Brokers Inc",
-                        "EQUITY",
-                        "BUY",
-                        new BigDecimal("100.0000"),
-                        new BigDecimal("245.50"),
-                        LocalDate.now(),
-                        "PENDING",
-                        now,
-                        now));
+        Trade saved = new Trade();
+        saved.setTradeRef("TRD-20260315-9999");
+        ReflectionTestUtils.setField(saved, "id", 42L);
+        TradeResponse response = new TradeResponse(
+                42L, "TRD-20260315-9999", 1L, "Apex Brokers Inc", 1L, "SAP.DE",
+                new BigDecimal("100.0000"), new BigDecimal("245.50"), LocalDate.now(),
+                "PENDING", now, now);
+        when(tradeService.create(any(TradeRequest.class), anyString())).thenReturn(saved);
+        when(tradeMapper.toResponse(saved)).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/trades")
+        mockMvc.perform(post("/v1/trades")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest()))
                         .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
@@ -83,7 +83,7 @@ class TradeControllerWebMvcTest {
     }
     @Test
     void testCreateTrade_unauthenticated_returns401() throws Exception {
-        mockMvc.perform(post("/api/v1/trades")
+        mockMvc.perform(post("/v1/trades")
             .contentType(MediaType.APPLICATION_JSON)
             .content("""
                 {
@@ -101,7 +101,7 @@ class TradeControllerWebMvcTest {
     @Test
     @WithMockUser(roles = "VIEWER")
     void testCreateTrade_viewerRole_returns403() throws Exception {
-        mockMvc.perform(post("/api/v1/trades")
+        mockMvc.perform(post("/v1/trades")
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(validRequest())))

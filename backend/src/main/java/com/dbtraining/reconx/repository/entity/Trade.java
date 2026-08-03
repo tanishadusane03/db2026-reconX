@@ -1,6 +1,7 @@
 package com.dbtraining.reconx.repository.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.annotation.CreatedDate;
@@ -36,8 +37,8 @@ import java.util.Objects;
     @Index(name = "idx_trades_status", columnList = "status")
 })
 @EntityListeners(AuditingEntityListener.class)
-// re-enable when envers tables are migrated
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+@SQLRestriction("deleted_at IS NULL")
 public class Trade {
 
     @Id
@@ -55,6 +56,12 @@ public class Trade {
     @JoinColumn(name = "counterparty_id", nullable = false)
     private Counterparty counterparty;
 
+    @Column(name = "asset_class", nullable = false, length = 20)
+    private String assetClass;
+
+    @Column(nullable = false, length = 4)
+    private String side;
+
     @Column(nullable = false, precision = 18, scale = 4)
     private BigDecimal quantity;
 
@@ -64,9 +71,8 @@ public class Trade {
     @Column(name = "trade_date", nullable = false)
     private LocalDate tradeDate;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private TradeStatus status = TradeStatus.PENDING;
+    private String status = TradeStatus.PENDING.name();
 
     @CreatedDate
     @Column(name = "created_at", updatable = false,nullable = false)
@@ -82,15 +88,18 @@ public class Trade {
     public Trade() {}
 
     /** Soft-delete: set deletedAt so @SQLRestriction filters this out. */
-    
+    public void softDelete() { this.deletedAt = Instant.now(); }
+
     public Long getId()                  { return id; }
     public String getTradeRef()          { return tradeRef; }
     public Instrument getInstrument()    { return instrument; }
     public Counterparty getCounterparty(){ return counterparty; }
+    public String getAssetClass()      { return assetClass; }
+    public String getSide()            { return side; }
     public BigDecimal getQuantity()      { return quantity; }
     public BigDecimal getPrice()         { return price; }
     public LocalDate getTradeDate()      { return tradeDate; }
-    public TradeStatus getStatus()            { return status; }
+    public String getStatus()          { return status; }
     public Instant getDeletedAt()        { return deletedAt; }
     public Instant getCreatedAt()        { return createdAt; }
     public Instant getModifiedAt()       { return modifiedAt; }
@@ -99,10 +108,12 @@ public class Trade {
     public void setTradeRef(String v)         { this.tradeRef = v; }
     public void setInstrument(Instrument v)   { this.instrument = v; }
     public void setCounterparty(Counterparty v){ this.counterparty = v; }
+    public void setAssetClass(String v)       { this.assetClass = v; }
+    public void setSide(String v)             { this.side = v; }
     public void setQuantity(BigDecimal v)     { this.quantity = v; }
     public void setPrice(BigDecimal v)        { this.price = v; }
     public void setTradeDate(LocalDate v)     { this.tradeDate = v; }
-    public void setStatus(TradeStatus v)           { this.status = v; }
+    public void setStatus(String v)           { this.status = v; }
     public void setDeletedAt(Instant deletedAt)   { this.deletedAt = deletedAt; }
     
     

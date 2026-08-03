@@ -1,0 +1,1 @@
+import{u as a,j as e,N as i}from"./index-BBVN0Aul.js";function h(t){function u(r){const{user:s}=a();return s?e.jsx(t,{...r}):e.jsx(i,{to:"/login",replace:!0})}return u.displayName=`withAuth(${t.displayName||t.name||"Component"})`,u}export{h as w};
