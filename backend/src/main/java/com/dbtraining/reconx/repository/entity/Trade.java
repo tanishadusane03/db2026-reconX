@@ -1,6 +1,7 @@
 package com.dbtraining.reconx.repository.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.annotation.CreatedDate;
@@ -36,7 +37,10 @@ import java.util.Objects;
     @Index(name = "idx_trades_status", columnList = "status")
 })
 @EntityListeners(AuditingEntityListener.class)
-// re-enable when envers tables are migrated
+// TICKET-ADV067 — the class doc promised soft delete via @SQLRestriction but the
+// annotation was missing, so DELETE set deleted_at and the row still came back
+// from every SELECT.
+@SQLRestriction("deleted_at is null")
 @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 public class Trade {
 
@@ -54,6 +58,15 @@ public class Trade {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "counterparty_id", nullable = false)
     private Counterparty counterparty;
+
+    // trades.asset_class / trades.side are NOT NULL in 002-schema.xml and are
+    // supplied by TradeRequest — without these fields every insert fails with
+    // "NULL not allowed for column ASSET_CLASS".
+    @Column(name = "asset_class", nullable = false, length = 20)
+    private String assetClass;
+
+    @Column(nullable = false, length = 4)
+    private String side;
 
     @Column(nullable = false, precision = 18, scale = 4)
     private BigDecimal quantity;
@@ -88,6 +101,8 @@ public class Trade {
     
     public Long getId()                  { return id; }
     public String getTradeRef()          { return tradeRef; }
+    public String getAssetClass()        { return assetClass; }
+    public String getSide()              { return side; }
     public Instrument getInstrument()    { return instrument; }
     public Counterparty getCounterparty(){ return counterparty; }
     public BigDecimal getQuantity()      { return quantity; }
@@ -100,6 +115,8 @@ public class Trade {
     
 
     public void setTradeRef(String v)         { this.tradeRef = v; }
+    public void setAssetClass(String v)       { this.assetClass = v; }
+    public void setSide(String v)             { this.side = v; }
     public void setInstrument(Instrument v)   { this.instrument = v; }
     public void setCounterparty(Counterparty v){ this.counterparty = v; }
     public void setQuantity(BigDecimal v)     { this.quantity = v; }

@@ -1,7 +1,9 @@
 package com.dbtraining.reconx.controller;
 
+import com.dbtraining.reconx.dto.TradeMapper;
 import com.dbtraining.reconx.dto.TradeRequest;
 import com.dbtraining.reconx.dto.TradeResponse;
+import com.dbtraining.reconx.repository.entity.Trade;
 import com.dbtraining.reconx.service.TradeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,7 @@ import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -32,6 +35,9 @@ class TradeControllerWebMvcTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockBean  private TradeService tradeService;
+    // TradeController also injects the MapStruct-generated TradeMapper, which is not
+    // part of the @WebMvcTest slice — mock it so the context can start.
+    @MockBean  private TradeMapper tradeMapper;
 
     private TradeRequest validRequest() {
         // Field order matches the current TradeRequest record:
@@ -51,20 +57,25 @@ class TradeControllerWebMvcTest {
     @Test
     @WithMockUser(roles = "TRADER")
     void testCreateTrade_authenticated_returns201() throws Exception {
-        // Field order matches the current TradeResponse record:
-        // (id, tradeRef, instrumentId, instrumentSymbol, counterpartyId, counterpartyName,
-        //  assetClass, side, quantity, price, tradeDate, status, createdAt, modifiedAt).
+        // TradeController.create returns service.create(req, actor) -> Trade entity,
+        // then maps it through TradeMapper. Mock both hops.
         Instant now = Instant.now();
-        when(tradeService.create(any())).thenReturn(
+
+        Trade saved = mock(Trade.class);
+        when(saved.getId()).thenReturn(42L);
+        when(tradeService.create(any(), any())).thenReturn(saved);
+
+        // Field order matches the current TradeResponse record:
+        // (id, tradeRef, counterpartyId, counterpartyName, instrumentId, instrumentSymbol,
+        //  quantity, price, tradeDate, status, createdAt, modifiedAt).
+        when(tradeMapper.toResponse(any())).thenReturn(
                 new TradeResponse(
                         42L,
                         "TRD-20260315-9999",
                         1L,
-                        "SAP.DE",
-                        1L,
                         "Apex Brokers Inc",
-                        "EQUITY",
-                        "BUY",
+                        1L,
+                        "SAP.DE",
                         new BigDecimal("100.0000"),
                         new BigDecimal("245.50"),
                         LocalDate.now(),

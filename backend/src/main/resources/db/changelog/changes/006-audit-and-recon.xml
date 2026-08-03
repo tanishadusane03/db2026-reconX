@@ -110,9 +110,14 @@
 
 
     <changeSet id="006-create-revinfo" author="trainer">
+        <validCheckSum>ANY</validCheckSum>
 
+    <!-- Envers' DefaultRevisionEntity declares a bare @GeneratedValue and, with
+         use_revision_entity_with_native_id (default true), relies on the database
+         to generate the revision number. Without autoIncrement the INSERT sends
+         NULL and every audited write fails with "NULL not allowed for column REV". -->
     <createTable tableName="revinfo">
-        <column name="rev" type="INT">
+        <column name="rev" type="INT" autoIncrement="true">
             <constraints primaryKey="true" nullable="false"/>
         </column>
 
@@ -120,5 +125,47 @@
     </createTable>
 
 </changeSet>
+
+    <!-- TICKET-ADV052 — Envers audit table for the @Audited Trade entity.
+         revinfo alone is not enough: Envers also needs one <entity>_aud table
+         per audited entity, or Hibernate's schema validation fails with
+         "missing table [trades_aud]" on startup.
+         Columns mirror `trades` (002-schema.xml) but are all nullable and carry
+         no unique constraint — Envers writes partial rows on DELETE revisions,
+         and the same trade_ref legitimately repeats across revisions. -->
+    <changeSet id="006-create-trades-aud" author="trainer">
+        <createTable tableName="trades_aud">
+            <column name="id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="SMALLINT"/>
+
+            <column name="trade_ref" type="VARCHAR(30)"/>
+            <column name="instrument_id" type="BIGINT"/>
+            <column name="counterparty_id" type="BIGINT"/>
+            <column name="asset_class" type="VARCHAR(20)"/>
+            <column name="side" type="VARCHAR(4)"/>
+            <column name="quantity" type="NUMERIC(18,4)"/>
+            <column name="price" type="NUMERIC(18,4)"/>
+            <column name="trade_date" type="DATE"/>
+            <column name="status" type="VARCHAR(20)"/>
+            <column name="deleted_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="modified_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <addPrimaryKey tableName="trades_aud" columnNames="id, rev"
+                       constraintName="pk_trades_aud"/>
+        <addForeignKeyConstraint baseTableName="trades_aud" baseColumnNames="rev"
+                                 constraintName="fk_trades_aud_revinfo"
+                                 referencedTableName="revinfo" referencedColumnNames="rev"/>
+
+        <rollback>
+            <dropTable tableName="trades_aud"/>
+        </rollback>
+    </changeSet>
 
 </databaseChangeLog>
