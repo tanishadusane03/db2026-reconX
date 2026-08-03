@@ -26,6 +26,8 @@ import com.dbtraining.reconx.dto.TradeRequest;
 import com.dbtraining.reconx.dto.TradeResponse;
 import com.dbtraining.reconx.repository.entity.Trade;
 import com.dbtraining.reconx.service.TradeService;
+import com.dbtraining.reconx.sse.TradeStreamService;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -50,10 +52,20 @@ public class TradeController {
 
     private final TradeService service;
     private final TradeMapper mapper;
+    private final TradeStreamService stream;
 
-    public TradeController(TradeService service, TradeMapper mapper) {
+    public TradeController(TradeService service, TradeMapper mapper, TradeStreamService stream) {
         this.service = service;
         this.mapper = mapper;
+        this.stream = stream;
+    }
+
+    // TICKET-ADV104 — Day 7 SSE live feed. Must be declared before any GET
+    // mapping that could otherwise shadow the "stream" path segment.
+    @GetMapping(value = "/stream", produces = org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(summary = "Live SSE feed of trade create/update/status-change events")
+    public SseEmitter stream() {
+        return stream.subscribe();
     }
 
     @GetMapping
@@ -85,9 +97,11 @@ public PagedResponse<TradeResponse> list(
         //   mapped TradeResponse body.
          String actor = String.valueOf(principal);
     Trade saved = service.create(req, actor);
+    TradeResponse response = mapper.toResponse(saved);
+    stream.broadcast(response);
     return ResponseEntity
             .created(URI.create("/api/v1/trades/" + saved.getId()))
-            .body(mapper.toResponse(saved));
+            .body(response);
     }
 
     @PutMapping("/{id}")
@@ -96,7 +110,9 @@ public PagedResponse<TradeResponse> list(
                                 @AuthenticationPrincipal Object principal) {
         // TODO(TICKET-ADV065): delegate to service.update(id, req, actor) and
         //   map the updated entity through mapper.toResponse.
-        return mapper.toResponse(service.update(id, req, String.valueOf(principal)));
+        TradeResponse response = mapper.toResponse(service.update(id, req, String.valueOf(principal)));
+        stream.broadcast(response);
+        return response;
     }
 
     @PatchMapping("/{id}/status")
@@ -107,7 +123,9 @@ public PagedResponse<TradeResponse> list(
         // TODO(TICKET-ADV066): read body.get("status") and call
         //   service.updateStatus(id, status, actor). Return mapper.toResponse(saved).
         String status = body.get("status");
-        return mapper.toResponse(service.updateStatus(id, status, String.valueOf(principal)));
+        TradeResponse response = mapper.toResponse(service.updateStatus(id, status, String.valueOf(principal)));
+        stream.broadcast(response);
+        return response;
     }
 
     @DeleteMapping("/{id}")

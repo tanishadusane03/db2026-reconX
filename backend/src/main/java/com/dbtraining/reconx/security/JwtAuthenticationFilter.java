@@ -35,8 +35,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
         String header = req.getHeader("Authorization");
+        String token = null;
         if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
+            token = header.substring(7);
+        } else if (req.getParameter("token") != null) {
+            // Browser EventSource cannot set request headers, so the Day 7 SSE
+            // feed (GET /v1/trades/stream) passes the JWT as ?token=... instead.
+            token = req.getParameter("token");
+        }
+        if (token != null) {
             try {
                 Claims claims = provider.parse(token);
                 String email = claims.getSubject();

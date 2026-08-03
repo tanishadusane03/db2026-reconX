@@ -7,7 +7,15 @@ export function useTradeStream(url = '/api/v1/trades/stream') {
   const [isConnected, setConnected] = useState(false);
 
   useEffect(() => {
-    const sse = new EventSource(url);
+    // EventSource cannot set an Authorization header, so the JWT rides along
+    // as a query param; the backend's JwtAuthenticationFilter accepts either.
+    const token = sessionStorage.getItem('reconx-token');
+    if (!token) {
+      setConnected(false);
+      return;
+    }
+    const authedUrl = `${url}?token=${encodeURIComponent(token)}`;
+    const sse = new EventSource(authedUrl);
     sse.onopen = () => setConnected(true);
     sse.onmessage = (e) => {
       try {
