@@ -14,13 +14,26 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.dbtraining.reconx.observability.ReconConfigMBean;
+import com.dbtraining.reconx.observability.ReconMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * TICKET-ADV040 / ADV041 / ADV042 — TDD: write the test FIRST, then the impl.
  */
 class ReconciliationEngineTest {
 
-    private final ReconciliationEngine engine = new ReconciliationEngine();
+    private final ReconConfigMBean reconConfigMBean =
+        new ReconConfigMBean(null);
+
+    private final ReconMetrics reconMetrics =
+        new ReconMetrics(new SimpleMeterRegistry());
+
+    private final ReconciliationEngine engine =
+        new ReconciliationEngine(
+                reconMetrics,
+                reconConfigMBean
+        );
 
     @Test
 @DisplayName("Exact match on price and quantity returns MATCHED")
