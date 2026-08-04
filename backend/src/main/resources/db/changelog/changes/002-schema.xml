@@ -36,6 +36,11 @@
 
     <!-- TICKET-ADV006 — instruments -->
     <changeSet id="002-create-instruments" author="trainer">
+        <!-- checksum changed: `metadata` column moved out to
+             002-create-instruments-metadata-h2 below, guarded by a real dbms
+             precondition, so it no longer collides with 003-jsonb.xml's
+             Postgres-only `ADD COLUMN metadata JSONB` (see TICKET-ADV151). -->
+        <validCheckSum>ANY</validCheckSum>
 <createTable tableName="instruments">
         <column name="id" type="BIGINT" autoIncrement="true">
             <constraints primaryKey="true"/>
@@ -56,12 +61,26 @@
             <constraints unique="true"/>
         </column>
 
-        <!-- H2 development equivalent of PostgreSQL JSONB metadata -->
-        <column name="metadata" type="CLOB"/>
-
     </createTable>
         <rollback>
             <dropTable tableName="instruments"/>
+        </rollback>
+    </changeSet>
+
+    <!-- TICKET-ADV151 — H2-only equivalent of PostgreSQL JSONB metadata.
+         Split out from 002-create-instruments so Postgres environments don't
+         get this CLOB column and then collide with 003-jsonb.xml's
+         Postgres-only `ADD COLUMN metadata JSONB` (was: unconditional column
+         on every dbms, causing "column metadata already exists" on Postgres). -->
+    <changeSet id="002-create-instruments-metadata-h2" author="trainer">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="h2"/>
+        </preConditions>
+        <addColumn tableName="instruments">
+            <column name="metadata" type="CLOB"/>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="instruments" columnName="metadata"/>
         </rollback>
     </changeSet>
 

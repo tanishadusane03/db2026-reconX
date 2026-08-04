@@ -126,6 +126,29 @@
 
 </changeSet>
 
+    <!-- TICKET-ADV151 — Envers' DefaultRevisionEntity uses Hibernate's "native"
+         id generator, which under PostgreSQLDialect resolves to a SEQUENCE
+         named after the entity (`revinfo_seq`) — not the SERIAL-backed
+         sequence (`revinfo_rev_seq`) that autoIncrement above implicitly
+         creates on Postgres. Without this exact sequence, ddl-auto=validate
+         fails at boot with "Schema-validation: missing sequence [revinfo_seq]".
+         H2 doesn't hit this (its native generator resolves differently), so
+         this is guarded to Postgres only. -->
+    <changeSet id="006-create-revinfo-seq" author="trainer">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <!-- incrementBy must be 50 to match Hibernate's SequenceStyleGenerator
+             default allocationSize — a mismatch fails fast at boot with
+             "increment size of the [revinfo_seq] sequence is set to [50] in
+             the entity mapping while the associated database sequence
+             increment size is [1]". -->
+        <createSequence sequenceName="revinfo_seq" startValue="1" incrementBy="50"/>
+        <rollback>
+            <dropSequence sequenceName="revinfo_seq"/>
+        </rollback>
+    </changeSet>
+
     <!-- TICKET-ADV052 — Envers audit table for the @Audited Trade entity.
          revinfo alone is not enough: Envers also needs one <entity>_aud table
          per audited entity, or Hibernate's schema validation fails with

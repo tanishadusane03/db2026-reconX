@@ -1,11 +1,17 @@
 # =============================================================================
-# TICKET-ADV049 — uat profile: PostgreSQL on docker-compose
+# TICKET-ADV049 / TICKET-ADV151 — uat profile: PostgreSQL on docker-compose
+#
+# Reads POSTGRES_HOST/PORT/DB/USER/PASSWORD from the environment (set by
+# docker-compose.yml's `backend` service) so the same profile resolves to
+# `postgres:5432` inside the compose network and `localhost:5432` when run
+# directly against a locally-forwarded container. `ddl-auto: validate` is
+# pinned so JPA never mutates the schema Liquibase owns.
 # =============================================================================
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/reconx_uat
-    username: reconx_uat
-    password: reconx_uat
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:reconx}
+    username: ${POSTGRES_USER:reconx_user}
+    password: ${POSTGRES_PASSWORD:reconx_pass}
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
